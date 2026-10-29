@@ -111,6 +111,25 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
 .addpic{aspect-ratio:4/5;border:2px dashed var(--line);background:transparent;color:var(--muted);border-radius:12px;font-weight:600;max-width:100%}
 .picf{display:flex;flex-direction:column;gap:8px;margin-top:14px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px}
 .picf img{max-height:240px;border-radius:10px;object-fit:cover;width:100%}
+.hr{display:flex;gap:10px;align-items:flex-start}
+.gear{background:var(--surface);border:1.5px solid var(--line);color:var(--ink);width:44px;height:44px;padding:0;font-size:1.3rem}
+.off{display:none!important}
+.sett{position:fixed;inset:0;z-index:25;background:var(--bg);overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 20px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) max(16px,env(safe-area-inset-left,0px))}
+.shead{display:flex;justify-content:space-between;align-items:center}
+.sh{font-family:var(--display);font-size:1.8rem;margin:0;color:var(--green);text-transform:uppercase;letter-spacing:.02em}
+.sh2{margin:10px 0 0}
+.tip{font-size:.9rem;color:var(--muted)}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px}
+.srow small{display:block;color:var(--muted)}
+#blocks li{gap:6px}
+#blocks .arr{background:var(--surface);border:1.5px solid var(--line);color:var(--ink);width:38px;height:38px;padding:0}
+#blocks .arr:disabled{opacity:.3}
+.sw{position:relative;width:52px;height:30px;flex:0 0 52px}
+.sw input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;z-index:1}
+.sw i{position:absolute;inset:0;background:var(--line);border-radius:15px;transition:background .2s}
+.sw i::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:var(--surface);transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sw input:checked+i{background:var(--green)}.sw input:checked+i::after{transform:translateX(22px)}
+.sw input:focus-visible+i{outline:3px solid var(--ruler);outline-offset:2px}
 .save{font-size:.8rem;color:var(--muted);text-align:center}
 .morning{position:fixed;inset:0;z-index:20;background:var(--green);color:var(--bg);overflow:auto;
   padding:calc(env(safe-area-inset-top,0px) + 32px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) max(20px,env(safe-area-inset-left,0px))}
@@ -136,36 +155,45 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
     <div class="mcount" id="mCount"></div>
   </div>
 </div>
+<div class="sett" id="sett" hidden>
+  <div class="mwrap">
+    <div class="shead"><h2 class="sh">Einstellungen</h2><button class="mini" id="settOk">Fertig</button></div>
+    <div class="srow"><div><b>Morgen-Modus</b><small>Jeden Morgen zuerst manifestieren</small></div><label class="sw"><input type="checkbox" id="swMorning"><i></i></label></div>
+    <h2 class="sh2">Meine Bausteine</h2>
+    <div class="tip">Schalte ein, was du brauchst, und bring es mit den Pfeilen in deine Reihenfolge.</div>
+    <ul id="blocks"></ul>
+  </div>
+</div>
 <div class="wrap">
   <header>
     <div><h1>Meisterstück</h1><div class="date" id="date"></div></div>
-    <div class="streak"><b id="streak">0</b><span>Tage am Stück</span></div>
+    <div class="hr"><div class="streak"><b id="streak">0</b><span>Tage am Stück</span></div><button class="gear" id="gear" aria-label="Einstellungen">⚙︎</button></div>
   </header>
 
-  <section class="char" id="char"></section>
+  <section data-block="char" class="char" id="char"></section>
 
-  <section class="today" id="today" aria-live="polite"></section>
+  <section data-block="today" class="today" id="today" aria-live="polite"></section>
 
-  <section>
+  <section data-block="ruler">
     <h2>Zollstock · erledigte Schritte</h2>
     <div class="ruler"><div class="fill" id="fill"></div><div class="ticks" id="ticks"></div></div>
     <div class="rcap"><span><b id="total">0</b> Schritte geschafft</span><span id="next"></span></div>
   </section>
 
-  <section>
+  <section data-block="plan">
     <h2 id="planH">Fokus-Plan</h2>
     <ul id="plan"></ul>
     <div class="ai" id="aiSplitBox" hidden><button class="mini" id="aiSplit">✨ Mit KI in kleine Schritte zerlegen</button><div id="aiPrev"></div></div>
     <form class="add" id="addStep"><input id="stepIn" placeholder="Nächster kleiner Schritt (15–30 Min)" autocomplete="off"><button>Dazu</button></form>
   </section>
 
-  <section id="coach" hidden>
+  <section data-block="coach" id="coach" hidden>
     <h2>Frag deinen Coach</h2>
     <div id="chat" class="chat"></div>
     <form class="add" id="askForm"><input id="askIn" placeholder="z. B. Wie fange ich mit dem ersten Video an?" autocomplete="off"><button>Fragen</button></form>
   </section>
 
-  <section id="pics">
+  <section data-block="pics" id="pics">
     <h2>Mein Visionboard · das will ich erreichen</h2>
     <div class="gal" id="galVision"></div>
     <h2 style="margin-top:22px">Erfolgswand · das habe ich geschafft</h2>
@@ -180,30 +208,30 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
     <div class="empty" id="picNote" hidden>Bilder kommen mit einem der nächsten Updates.</div>
   </section>
 
-  <section>
+  <section data-block="rewards">
     <h2>Meine Belohnungen</h2>
     <ul id="rewards"></ul>
     <form class="add rw" id="addRw"><input id="rwIn" placeholder="z. B. Neues Mikrofon kaufen" autocomplete="off"><input id="rwLvl" type="number" min="2" max="99" placeholder="Level" aria-label="Ab Level"><button>Dazu</button></form>
   </section>
 
-  <section>
+  <section data-block="check">
     <h2>Abend-Check-in</h2>
     <div id="checkBox"></div>
   </section>
 
-  <section>
+  <section data-block="ideas">
     <h2>Ideen-Parkplatz</h2>
     <form class="add" id="addIdea"><input id="ideaIn" placeholder="Idee raus aus dem Kopf …" autocomplete="off"><button>Parken</button></form>
     <ul id="ideas"></ul>
     <div id="planBox"></div>
   </section>
 
-  <section>
+  <section data-block="vision">
     <h2>Wofür ich das mache</h2>
     <div id="visionBox"></div>
   </section>
 
-  <section class="log">
+  <section data-block="log" class="log">
     <h2>Zuletzt geschafft</h2>
     <ul id="log"></ul>
   </section>
@@ -242,7 +270,22 @@ function stats(){const man=(S.man||[]).length,ck=(S.checks||[]).length,st=S.log.
   return{xp,L,rest,need:L*100,man,ck,st,id,perfect}}
 let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
 let lastXp=null;
+const BLOCKS={char:"Level & Charakter",today:"Tagesquest",ruler:"Zollstock",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
+function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>all.includes(x.id));all.forEach(id=>{if(!L.find(x=>x.id===id))L.push({id,on:true})});S.layout=L;
+  const w=document.querySelector(".wrap"),end=$("save");
+  L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}})}
+function renderSett(){const L=S.layout;$("swMorning").checked=S.morningOn!==false;
+  $("blocks").innerHTML=L.map((x,i)=>`<li><span class="t">${BLOCKS[x.id]}</span><button class="arr" data-up="${i}" ${i===0?"disabled":""} aria-label="Nach oben">↑</button><button class="arr" data-dn="${i}" ${i===L.length-1?"disabled":""} aria-label="Nach unten">↓</button><label class="sw"><input type="checkbox" data-tog="${i}" ${x.on?"checked":""} aria-label="${BLOCKS[x.id]} anzeigen"><i></i></label></li>`).join("")}
+$("gear").onclick=()=>{layout();renderSett();$("sett").hidden=false};
+$("settOk").onclick=()=>{$("sett").hidden=true;save();window.scrollTo(0,0)};
+$("swMorning").onchange=e=>{S.morningOn=e.target.checked;try{localStorage.setItem(LS,JSON.stringify(S))}catch(err){}};
+$("blocks").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const L=S.layout;
+  if(b.dataset.up){const i=+b.dataset.up;[L[i-1],L[i]]=[L[i],L[i-1]]}
+  if(b.dataset.dn){const i=+b.dataset.dn;[L[i+1],L[i]]=[L[i],L[i+1]]}
+  layout();renderSett()});
+$("blocks").addEventListener("change",e=>{const i=e.target.dataset.tog;if(i===undefined)return;S.layout[+i].on=e.target.checked;layout()});
 function render(){
+  layout();
   $("date").textContent=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
   $("streak").textContent=streak();
   S.man=S.man||[];
@@ -305,8 +348,7 @@ function render(){
   // Ideen
   $("ideas").innerHTML=S.ideas.length?S.ideas.map(i=>`<li><span class="t">${esc(i.text)}</span>${ai?`<button class="mini" data-plan="${i.id}">Bauplan</button>`:""}<button class="mini" data-focus="${i.id}">Fokus</button><button class="x" data-idel="${i.id}" aria-label="Idee löschen">×</button></li>`).join(""):`<li class="empty">Hier landet alles, was dir einfällt. Du musst es nicht sofort umsetzen.</li>`;
   // Vision
-  $("visionBox").innerHTML=`<div class="vision">${esc(S.vision)}</div><div class="row"><button class="link" id="editV">Ändern</button><button class="link" id="mTog">Morgen-Modus: ${S.morningOn===false?"aus":"an"}</button></div>`;
-  $("mTog").onclick=()=>{S.morningOn=S.morningOn===false;save()};
+  $("visionBox").innerHTML=`<div class="vision">${esc(S.vision)}</div><div class="row"><button class="link" id="editV">Ändern</button></div>`;
   $("editV").onclick=()=>{$("visionBox").innerHTML=`<textarea id="vIn">${esc(S.vision)}</textarea><div class="row"><button class="mini" id="vOk">Speichern</button></div>`;
     $("vOk").onclick=()=>{S.vision=$("vIn").value.trim()||S.vision;save()}};
   // Check-in
