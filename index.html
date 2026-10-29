@@ -233,6 +233,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 .mini.warn{background:#d64545;color:#fff;border-color:#d64545}.dmsg{margin:0;color:#d64545;font-size:.9rem;min-height:1.2em}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
 .social{display:flex;align-items:center;justify-content:center;gap:10px;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:#1f1f1f;cursor:pointer;min-height:48px}.social svg{width:20px;height:20px}
+.vform{display:flex;flex-direction:column;gap:8px}.vform textarea{min-height:70px}
 .office canvas{display:block;width:100%;height:auto}
 .who{display:flex;gap:8px}.who button{flex:1;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}.who button.on{background:var(--green);color:var(--bg);border-color:var(--green)}
 .scene{position:relative;background:linear-gradient(var(--sky),var(--surface));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
@@ -342,6 +343,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   <div class="mwrap">
     <div class="shead"><h2 class="sh">Einstellungen</h2><button class="mini" id="settOk">Fertig</button></div>
     <div class="srow"><div><b>Morgen-Modus</b><small>Jeden Morgen zuerst manifestieren</small></div><label class="sw"><input type="checkbox" id="swMorning"><i></i></label></div>
+    <h2 class="sh2">Mein großes Ziel</h2>
+    <form class="vform" id="vSet"><textarea id="vSetIn" aria-label="Mein großes Ziel"></textarea><button class="mini" id="vSetOk">Ziel speichern</button></form>
     <h2 class="sh2">Deine Figur</h2>
     <div class="who" role="group" aria-label="Figur wählen"><button type="button" id="whoW">Mia</button><button type="button" id="whoM">Leon</button></div>
     <h2 class="sh2">Erinnerungen</h2>
@@ -401,7 +404,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   <section data-block="plan">
     <h2 id="planH">Fokus-Plan</h2>
     <div class="goals" id="goalTabs" role="tablist" aria-label="Meine Ziele"></div>
-    <div class="row gact"><button type="button" class="link" id="weekBtn">Woche planen</button><button type="button" class="link" id="goalDone">Ziel abschließen</button></div>
+    <div class="row gact"><button type="button" class="link" id="weekBtn">Woche planen</button><button type="button" class="link" id="goalRen">Umbenennen</button><button type="button" class="link" id="goalDone">Ziel abschließen</button></div>
     <ul id="plan"></ul>
     <div class="ai" id="aiSplitBox"><button class="mini" id="aiSplit">✨ Mit KI in kleine Schritte zerlegen</button><div id="aiPrev"></div></div>
     <form class="add" id="addStep"><input id="stepIn" placeholder="Nächster kleiner Schritt (15–30 Min)" autocomplete="off"><button>Dazu</button></form>
@@ -690,7 +693,7 @@ function render(){
   // Plan
   $("planH").textContent=g?"Fokus-Plan · "+g.title:"Fokus-Plan";
   $("goalTabs").innerHTML=S.goals.map(x=>`<button role="tab" data-goal="${x.id}" aria-selected="${x.id===S.focus}">${esc(x.title)}<small>${x.steps.length}</small></button>`).join("")+(S.goals.length<5?'<button type="button" data-goal="new" class="gnew">+ Ziel</button>':"");
-  $("goalDone").hidden=!g;
+  $("goalDone").hidden=!g;$("goalRen").hidden=!g;
   $("plan").innerHTML=open.length?open.map((s,i)=>`<li><span class="n">${i+1}</span><span class="t">${esc(s.text)}</span><button class="x" data-del="${s.id}" aria-label="Schritt löschen">×</button></li>`).join(""):`<li class="empty">Noch keine Schritte geplant.</li>`;
   $("addStep").hidden=!g;
   // Ideen
@@ -1003,6 +1006,13 @@ $("authGoogle").onclick=async()=>{if(!SB)return;authMsg("Weiterleitung zu Google
   const {error}=await SB.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+"/#heute"}});
   if(error)authMsg("Google-Anmeldung ist noch nicht eingerichtet: "+error.message)};
 SB&&SB.auth.onAuthStateChange((ev,sess)=>{if(ev==="SIGNED_IN"&&sess&&!curUser)startCloud(sess.user)});
+// Großes Ziel in den Einstellungen ändern; einzelne Ziele umbenennen
+$("gear").addEventListener("click",()=>{$("vSetIn").value=S.vision||""});
+$("vSet").onsubmit=e=>{e.preventDefault();const v=$("vSetIn").value.trim();if(!v){$("vSetIn").focus();return}S.vision=v;toast("Großes Ziel gespeichert");save()};
+$("goalRen").onclick=()=>{const g=goal();if(!g)return;const f=$("goalRenF");if(f){f.remove();return}
+  const form=document.createElement("form");form.className="add";form.id="goalRenF";form.innerHTML='<input id="goalRenIn" aria-label="Neuer Name für das Ziel" autocomplete="off"><button>Speichern</button>';
+  $("goalTabs").after(form);$("goalRenIn").value=g.title;$("goalRenIn").focus();$("goalRenIn").select();
+  form.onsubmit=ev=>{ev.preventDefault();const v=$("goalRenIn").value.trim();if(!v)return;g.title=v;form.remove();toast("Ziel umbenannt");save()}};
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
