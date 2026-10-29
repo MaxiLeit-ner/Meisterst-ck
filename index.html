@@ -531,7 +531,8 @@ $("brBtns").addEventListener("click",e=>{const a=e.target.closest("a");if(!a)ret
 $("brClose").onclick=()=>{$("bridge").hidden=true};
 $("brOk").onclick=()=>{const t=$("brIn").value.trim();if(!t){$("brIn").focus();return}const r=brCb&&brCb(t);if(r===false){$("brMsg").textContent="Daraus konnte ich keine Schritte lesen. Kopier bitte die ganze Antwort.";return}$("bridge").hidden=true};
 function parseJSON(t){const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)return null;try{return JSON.parse(t.slice(a,b+1))}catch(e){return null}}
-function parseLines(t){return t.split(/\n/).map(l=>l.trim()).filter(l=>/^([-*•]|\d+[.)])\s+/.test(l)).map(l=>l.replace(/^([-*•]|\d+[.)])\s+/,"").replace(/\*\*/g,"").trim()).filter(Boolean).slice(0,12)}
+function parseLines(t){const L=t.split(/\n/).map(l=>l.trim()).filter(Boolean),re=/^([-*•–]|\d+[.)])\s+/,clean=l=>l.replace(re,"").replace(/\*\*/g,"").trim();
+  let r=L.filter(l=>re.test(l)).map(clean);if(!r.length)r=L.filter(l=>l.length<=160&&!/[:：]$/.test(l)).map(clean);return r.filter(Boolean).slice(0,12)}
 $("askBtns").innerHTML=AIS.map(([n],i)=>`<button class="aibtn" data-ask="${i}">${n}</button>`).join("");
 $("askBtns").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const q=$("askIn").value.trim();if(!q){$("askIn").focus();return}
   const [n,u]=AIS[+b.dataset.ask],pr=ctx()+"\n\nMeine Frage: "+q;copyText(pr);window.open(u.endsWith("=")?u+encodeURIComponent(pr):u,"_blank");toast("Frage kopiert. In "+n+" einfügen, falls sie nicht schon drinsteht.")});
