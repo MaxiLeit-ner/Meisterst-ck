@@ -229,6 +229,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 .tag.ok{background:var(--green);color:var(--bg)}.fhint{color:var(--muted);font-size:.9rem}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}.brand>div{min-width:0}#logo{width:48px;height:48px;flex:0 0 48px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.18)}
 @media (max-width:440px){#logo{width:40px;height:40px;flex-basis:40px}.brand{gap:8px}}
+.danger{margin-top:14px;display:flex;flex-direction:column;gap:8px}.danger .srow{border-color:color-mix(in srgb,#d64545 35%,var(--line))}
+.mini.warn{background:#d64545;color:#fff;border-color:#d64545}.dmsg{margin:0;color:#d64545;font-size:.9rem;min-height:1.2em}
 .office canvas{display:block;width:100%;height:auto}
 .who{display:flex;gap:8px}.who button{flex:1;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}.who button.on{background:var(--green);color:var(--bg);border-color:var(--green)}
 .scene{position:relative;background:linear-gradient(var(--sky),var(--surface));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
@@ -352,6 +354,11 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
     <h2 class="sh2">Konto</h2>
     <div class="tip" id="acct">Nicht angemeldet</div>
     <div class="row"><button class="mini" id="logout" hidden>Abmelden</button><button class="mini" id="acctLogin" hidden>Konto erstellen oder anmelden</button></div>
+    <div class="danger">
+      <div class="srow"><div><b>Fortschritt zurücksetzen</b><small>Alles auf Anfang: Level, Münzen, Ziele, Ideen, Bilder. Dein Konto bleibt.</small></div><button class="mini" id="resetAll" type="button">Zurücksetzen</button></div>
+      <div class="srow" id="delRow" hidden><div><b>Konto löschen</b><small>Löscht dein Konto und alle Daten endgültig, auch Bilder und Freunde.</small></div><button class="mini" id="delAcct" type="button">Löschen</button></div>
+      <p class="dmsg" id="dMsg" role="status"></p>
+    </div>
   </div>
 </div>
 <div class="wrap">
@@ -815,7 +822,7 @@ const SB=window.supabase?window.supabase.createClient("https://ukeebtbldtucultdh
 async function startCloud(user){curUser=user;
   assets={upload:async blob=>{const path=user.id+"/"+uid()+Date.now()+".jpg";const {error}=await SB.storage.from("bilder").upload(path,blob,{contentType:"image/jpeg"});if(error)throw error;return {id:path}}};
   ref={set:data=>SB.from("app_state").upsert({user_id:user.id,data,updated_at:new Date().toISOString()}).then(r=>{if(r.error)throw r.error})};
-  $("authBox").hidden=true;$("acct").textContent="Angemeldet als "+user.email;$("logout").hidden=false;
+  $("authBox").hidden=true;$("acct").textContent="Angemeldet als "+user.email;$("logout").hidden=false;$("delRow").hidden=false;
   const {data,error}=await SB.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
   if(error){$("save").textContent="Cloud gerade nicht erreichbar. Auf diesem Gerät ist alles da.";return}
   if(data&&data.data){S=data.data;S.ideas=S.ideas||[];S.log=S.log||[];S.goals=S.goals||[];lastXp=null;render();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}$("save").textContent="Gespeichert"}
@@ -973,6 +980,20 @@ function drawLogo(frac){const c=$("logo");if(!c)return;const x=c.getContext("2d"
   x.fillStyle="#ffec96";x.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,rr2=k%2?2.2:5;x.lineTo(48+Math.cos(a)*rr2,8+Math.sin(a)*rr2)}x.fill();x.restore();
   // Browser-Tab-Symbol mitziehen
   if(lit!==LOGO_LAST){LOGO_LAST=lit;try{let l=document.querySelector('link[rel="icon"]');l.href=c.toDataURL("image/png")}catch(e){}}}
+// Konto: Fortschritt zurücksetzen oder Konto löschen, jeweils mit zweitem Tipp zur Bestätigung
+var ARM={};
+function armed(id,label,sure){if(ARM[id])return true;ARM[id]=true;const b=$(id);b.textContent=sure;b.classList.add("warn");$("dMsg").textContent="Tipp nochmal zum Bestätigen. Das kann nicht rückgängig gemacht werden.";
+  setTimeout(()=>{ARM[id]=false;b.textContent=label;b.classList.remove("warn");$("dMsg").textContent=""},5000);return false}
+$("resetAll").onclick=async()=>{if(!armed("resetAll","Zurücksetzen","Ja, alles zurücksetzen"))return;$("resetAll").disabled=true;
+  try{if(SB&&curUser){const {data:f}=await SB.storage.from("bilder").list(curUser.id,{limit:1000});if(f&&f.length)await SB.storage.from("bilder").remove(f.map(x=>curUser.id+"/"+x.name));
+    const keep={friendCode:S.friendCode,friendName:S.friendName,avatar:S.avatar};S=Object.assign(starter(),keep);S.vision="";await SB.from("app_state").upsert({user_id:curUser.id,data:S,updated_at:new Date().toISOString()})}
+   else{S=starter();S.vision=""}
+   try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}location.href="/#heute";location.reload()}
+  catch(e){$("resetAll").disabled=false;$("dMsg").textContent="Das hat nicht geklappt. Prüf deine Verbindung und versuch es nochmal."}};
+$("delAcct").onclick=async()=>{if(!armed("delAcct","Löschen","Ja, Konto endgültig löschen"))return;$("delAcct").disabled=true;
+  try{const {data}=await SB.auth.getSession();const r=await fetch("/api/delete-account",{method:"POST",headers:{Authorization:"Bearer "+data.session.access_token}});
+    if(!r.ok)throw new Error(await r.text());await SB.auth.signOut();try{localStorage.clear()}catch(e){}location.href="/";}
+  catch(e){$("delAcct").disabled=false;$("dMsg").textContent="Löschen hat nicht geklappt. Versuch es nochmal oder schreib dem Entwickler."}};
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
