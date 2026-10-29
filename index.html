@@ -166,6 +166,9 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 @keyframes fly{from{transform:translateY(0);opacity:1}to{transform:translateY(-70px);opacity:0}}
 .today.flash{animation:flash .6s}@keyframes flash{50%{transform:scale(1.02)}}
 @media (prefers-reduced-motion:reduce){.lvbox,.xpfly,.today.flash{animation:none}.pic{transform:none}}
+.ptimes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end}
+.ptimes label{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}.ptimes input{padding:10px 6px}
+.ptimes button{grid-column:1/-1}
 .save{font-size:.8rem;color:var(--muted);text-align:center}
 .morning{position:fixed;inset:0;z-index:20;background:var(--green);color:var(--bg);overflow:auto;
   padding:calc(env(safe-area-inset-top,0px) + 32px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) max(20px,env(safe-area-inset-left,0px))}
@@ -221,6 +224,14 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   <div class="mwrap">
     <div class="shead"><h2 class="sh">Einstellungen</h2><button class="mini" id="settOk">Fertig</button></div>
     <div class="srow"><div><b>Morgen-Modus</b><small>Jeden Morgen zuerst manifestieren</small></div><label class="sw"><input type="checkbox" id="swMorning"><i></i></label></div>
+    <h2 class="sh2">Erinnerungen</h2>
+    <div class="srow"><div><b>Push-Nachrichten</b><small id="pushInfo">Dreimal am Tag an dein Ziel erinnert werden</small></div><label class="sw"><input type="checkbox" id="swPush"><i></i></label></div>
+    <div class="ptimes" id="pTimes" hidden>
+      <label>Morgen-Manifest<input type="time" id="pt0" value="08:00" step="900"></label>
+      <label>Mittags-Check<input type="time" id="pt1" value="13:00" step="900"></label>
+      <label>Abend-Check-in<input type="time" id="pt2" value="20:00" step="900"></label>
+      <button class="mini" id="pSave">Zeiten speichern</button>
+    </div>
     <h2 class="sh2">Meine Bausteine</h2>
     <div class="tip">Schalte ein, was du brauchst, und bring es mit den Pfeilen in deine Reihenfolge.</div>
     <ul id="blocks"></ul>
@@ -358,7 +369,7 @@ function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>a
   L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}})}
 function renderSett(){const L=S.layout;$("swMorning").checked=S.morningOn!==false;
   $("blocks").innerHTML=L.map((x,i)=>`<li><span class="t">${BLOCKS[x.id]}</span><button class="arr" data-up="${i}" ${i===0?"disabled":""} aria-label="Nach oben">↑</button><button class="arr" data-dn="${i}" ${i===L.length-1?"disabled":""} aria-label="Nach unten">↓</button><label class="sw"><input type="checkbox" data-tog="${i}" ${x.on?"checked":""} aria-label="${BLOCKS[x.id]} anzeigen"><i></i></label></li>`).join("")}
-$("gear").onclick=()=>{layout();renderSett();$("sett").hidden=false};
+$("gear").onclick=()=>{layout();renderSett();$("sett").hidden=false;pushState().catch(()=>{})};
 $("settOk").onclick=()=>{$("sett").hidden=true;save();window.scrollTo(0,0)};
 $("swMorning").onchange=e=>{S.morningOn=e.target.checked;try{localStorage.setItem(LS,JSON.stringify(S))}catch(err){}};
 $("blocks").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const L=S.layout;
@@ -573,9 +584,28 @@ function makePlan(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;if(i.plan)
     i.plan=P;save();showPlan(i)})}
 
 render();
+// Push-Erinnerungen
+const VAPID="BIh1B3FvlKG_6A9tKOZ5lGY4UaQB3MhYj4eFjFGP1ISLm2E6dxpK18K61p5UDmSti0j7xoYgAItGlToAhoPas8M";let curUser=null;
+const q15=t=>{const [h,m]=t.split(":").map(Number);return String(h).padStart(2,"0")+":"+String(Math.floor(m/15)*15).padStart(2,"0")};
+function b64u(x){const p="=".repeat((4-x.length%4)%4),r=atob((x+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(r,c=>c.charCodeAt(0))}
+async function pushState(){const ok="PushManager" in window&&"serviceWorker" in navigator&&"Notification" in window;
+  if(!ok){$("swPush").disabled=true;$("pushInfo").textContent="Lege die App auf den Home-Bildschirm, dann gehen Push-Nachrichten.";return}
+  if(!curUser){$("swPush").disabled=true;$("pushInfo").textContent="Melde dich an, um Push-Nachrichten zu bekommen.";return}
+  const reg=await navigator.serviceWorker.ready,sub=await reg.pushManager.getSubscription();
+  $("swPush").disabled=false;$("swPush").checked=!!sub&&Notification.permission==="granted";$("pTimes").hidden=!$("swPush").checked;
+  if(S.pushTimes)S.pushTimes.forEach((t,i)=>$("pt"+i).value=t)}
+async function pushSave(sub){const times=[0,1,2].map(i=>q15($("pt"+i).value||["08:00","13:00","20:00"][i]));S.pushTimes=times;
+  const {error}=await SB.from("push_subs").upsert({endpoint:sub.endpoint,user_id:curUser.id,sub:sub.toJSON(),times,tz:Intl.DateTimeFormat().resolvedOptions().timeZone});
+  if(error)throw error;toast("Erinnerungen gespeichert")}
+$("swPush").onchange=async e=>{const reg=await navigator.serviceWorker.ready;
+  if(e.target.checked){try{const perm=await Notification.requestPermission();if(perm!=="granted"){e.target.checked=false;$("pushInfo").textContent="Mitteilungen sind blockiert. Erlaube sie in den iPhone-Einstellungen unter Meisterstück.";return}
+      const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
+      await pushSave(sub);$("pTimes").hidden=false}catch(err){e.target.checked=false;toast("Push konnte nicht eingerichtet werden. Versuch es nochmal.")}}
+  else{const sub=await reg.pushManager.getSubscription();if(sub){await SB.from("push_subs").delete().eq("endpoint",sub.endpoint);await sub.unsubscribe()}$("pTimes").hidden=true;toast("Erinnerungen aus")}};
+$("pSave").onclick=async()=>{const sub=await (await navigator.serviceWorker.ready).pushManager.getSubscription();if(!sub)return;try{await pushSave(sub);save()}catch(e){toast("Speichern hat nicht geklappt.")}};
 // Konto & Cloud-Speicherung (Supabase)
 const SB=window.supabase?window.supabase.createClient("https://ukeebtbldtucultdhtba.supabase.co","sb_publishable_ElFCQKmpadN8HHbBKQn9VA_k2N2skYw"):null;
-async function startCloud(user){
+async function startCloud(user){curUser=user;
   assets={upload:async blob=>{const path=user.id+"/"+uid()+Date.now()+".jpg";const {error}=await SB.storage.from("bilder").upload(path,blob,{contentType:"image/jpeg"});if(error)throw error;return {id:path}}};
   ref={set:data=>SB.from("app_state").upsert({user_id:user.id,data,updated_at:new Date().toISOString()}).then(r=>{if(r.error)throw r.error})};
   $("authBox").hidden=true;$("acct").textContent="Angemeldet als "+user.email;$("logout").hidden=false;
