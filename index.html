@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Meisterstück">
 <link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <title>Meisterstück</title>
@@ -155,6 +156,21 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
     <div class="mcount" id="mCount"></div>
   </div>
 </div>
+<div class="sett" id="authBox" hidden>
+  <div class="mwrap">
+    <h1>Meisterstück</h1>
+    <div class="tip">Mit Konto sind deine Ziele sicher gespeichert, auch wenn du dein Handy wechselst.</div>
+    <form class="ck" id="authForm">
+      <h2 class="sh2" id="authTitle">Anmelden</h2>
+      <label for="authMail">E-Mail</label><input id="authMail" type="email" autocomplete="email">
+      <label for="authPw">Passwort</label><input id="authPw" type="password" autocomplete="current-password">
+      <button class="big" id="authGo">Anmelden</button>
+      <div class="tip" id="authMsg" role="status"></div>
+      <button type="button" class="link" id="authSwitch">Noch kein Konto? Jetzt erstellen</button>
+      <button type="button" class="link" id="authLocal">Ohne Konto nutzen (nur auf diesem Gerät)</button>
+    </form>
+  </div>
+</div>
 <div class="sett" id="sett" hidden>
   <div class="mwrap">
     <div class="shead"><h2 class="sh">Einstellungen</h2><button class="mini" id="settOk">Fertig</button></div>
@@ -162,6 +178,9 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
     <h2 class="sh2">Meine Bausteine</h2>
     <div class="tip">Schalte ein, was du brauchst, und bring es mit den Pfeilen in deine Reihenfolge.</div>
     <ul id="blocks"></ul>
+    <h2 class="sh2">Konto</h2>
+    <div class="tip" id="acct">Nicht angemeldet</div>
+    <div class="row"><button class="mini" id="logout" hidden>Abmelden</button><button class="mini" id="acctLogin" hidden>Konto erstellen oder anmelden</button></div>
   </div>
 </div>
 <div class="wrap">
@@ -446,15 +465,35 @@ async function makePlan(id){const i=S.ideas.find(x=>x.id===id);if(!i||!ai)return
 (async()=>{try{ai=await window.claude?.use?.("sample");if(ai){$("coach").hidden=false;$("aiSplitBox").hidden=false;render()}}catch(e){}})();
 
 render();
-(async()=>{try{
-  db=await window.claude?.use?.("db");const user=await window.claude?.use?.("user");
-  const id=user?await user.id():null;
-  if(!db||!id){db=null;$("save").textContent="Nur auf diesem Gerät gespeichert.";return}
-  ref=db.collection("data/users/"+id).doc("werkbank");
-  const snap=await ref.get();
-  if(snap.exists){S=snap.data();S.ideas=S.ideas||[];S.log=S.log||[];S.goals=S.goals||[];lastXp=null;render();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}$("save").textContent="Gespeichert"}
-  else save();
-}catch(e){db=null;$("save").textContent="Nur auf diesem Gerät gespeichert."}})();
+// Konto & Cloud-Speicherung (Supabase)
+const SB=window.supabase?window.supabase.createClient("https://ukeebtbldtucultdhtba.supabase.co","sb_publishable_ElFCQKmpadN8HHbBKQn9VA_k2N2skYw"):null;
+async function startCloud(user){
+  ref={set:data=>SB.from("app_state").upsert({user_id:user.id,data,updated_at:new Date().toISOString()}).then(r=>{if(r.error)throw r.error})};
+  $("authBox").hidden=true;$("acct").textContent="Angemeldet als "+user.email;$("logout").hidden=false;
+  const {data,error}=await SB.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
+  if(error){$("save").textContent="Cloud gerade nicht erreichbar. Auf diesem Gerät ist alles da.";return}
+  if(data&&data.data){S=data.data;S.ideas=S.ideas||[];S.log=S.log||[];S.goals=S.goals||[];lastXp=null;render();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}$("save").textContent="Gespeichert"}
+  else save();}
+let authMode="in";
+function authMsg(t){$("authMsg").textContent=t}
+$("authSwitch").onclick=()=>{authMode=authMode==="in"?"up":"in";$("authTitle").textContent=authMode==="in"?"Anmelden":"Konto erstellen";
+  $("authGo").textContent=authMode==="in"?"Anmelden":"Konto erstellen";$("authSwitch").textContent=authMode==="in"?"Noch kein Konto? Jetzt erstellen":"Schon ein Konto? Anmelden";authMsg("")};
+$("authForm").onsubmit=async e=>{e.preventDefault();const email=$("authMail").value.trim(),password=$("authPw").value;
+  if(!email||password.length<6){authMsg("Bitte E-Mail und ein Passwort mit mindestens 6 Zeichen eingeben.");return}
+  $("authGo").disabled=true;authMsg("Einen Moment …");
+  const r=authMode==="in"?await SB.auth.signInWithPassword({email,password}):await SB.auth.signUp({email,password,options:{emailRedirectTo:location.origin}});
+  $("authGo").disabled=false;
+  if(r.error){authMsg(/Invalid login/i.test(r.error.message)?"E-Mail oder Passwort stimmt nicht.":/confirm/i.test(r.error.message)?"Bitte bestätige zuerst deine E-Mail über den Link, den wir dir geschickt haben.":"Das hat nicht geklappt: "+r.error.message);return}
+  if(r.data.session)startCloud(r.data.session.user);
+  else authMsg("Fast geschafft! Wir haben dir eine E-Mail geschickt. Tippe auf den Link darin und melde dich danach hier an.")};
+$("authLocal").onclick=()=>{try{localStorage.setItem("ms-local","1")}catch(e){}$("authBox").hidden=true;$("save").textContent="Nur auf diesem Gerät gespeichert."};
+$("acctLogin").onclick=()=>{$("sett").hidden=true;$("authBox").hidden=false};
+$("logout").onclick=async()=>{await SB.auth.signOut();try{localStorage.removeItem(LS);localStorage.removeItem("ms-local")}catch(e){}location.reload()};
+(async()=>{if(!SB){$("save").textContent="Nur auf diesem Gerät gespeichert.";return}
+  const {data}=await SB.auth.getSession();
+  if(data.session)return startCloud(data.session.user);
+  let local=false;try{local=localStorage.getItem("ms-local")==="1"}catch(e){}
+  if(local){$("save").textContent="Nur auf diesem Gerät gespeichert.";$("acctLogin").hidden=false}else $("authBox").hidden=false})();
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
