@@ -147,6 +147,9 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
 .caly{grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:2px;overflow-x:auto}.caly i{width:9px;border-radius:2px}
 .calcap{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:6px}
 .revmsg{margin-top:12px;font-weight:600}
+#askIn{margin:8px 0}
+a.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;padding:12px 16px;font-weight:600;text-decoration:none}
+.aibtn{background:var(--green);color:var(--bg);flex:1;min-width:6.5em}
 .save{font-size:.8rem;color:var(--muted);text-align:center}
 .morning{position:fixed;inset:0;z-index:20;background:var(--green);color:var(--bg);overflow:auto;
   padding:calc(env(safe-area-inset-top,0px) + 32px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) max(20px,env(safe-area-inset-left,0px))}
@@ -187,6 +190,17 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
     </form>
   </div>
 </div>
+<div class="sett" id="bridge" hidden>
+  <div class="mwrap">
+    <div class="shead"><h2 class="sh" id="brTitle">KI fragen</h2><button class="mini" id="brClose">Schließen</button></div>
+    <div class="tip"><b>1.</b> Wähle deine KI. Die Anfrage wird kopiert, du musst sie dort nur noch einfügen und senden.</div>
+    <div class="row" id="brBtns"></div>
+    <div class="tip" id="brCopied" role="status"></div>
+    <div id="brBack"><div class="tip"><b>2.</b> Kopier die Antwort der KI und füg sie hier ein.</div>
+      <textarea id="brIn" placeholder="Antwort hier einfügen"></textarea>
+      <button class="big" id="brOk">Übernehmen</button><div class="tip" id="brMsg" role="status"></div></div>
+  </div>
+</div>
 <div class="sett" id="sett" hidden>
   <div class="mwrap">
     <div class="shead"><h2 class="sh">Einstellungen</h2><button class="mini" id="settOk">Fertig</button></div>
@@ -224,14 +238,15 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
   <section data-block="plan">
     <h2 id="planH">Fokus-Plan</h2>
     <ul id="plan"></ul>
-    <div class="ai" id="aiSplitBox" hidden><button class="mini" id="aiSplit">✨ Mit KI in kleine Schritte zerlegen</button><div id="aiPrev"></div></div>
+    <div class="ai" id="aiSplitBox"><button class="mini" id="aiSplit">✨ Mit KI in kleine Schritte zerlegen</button><div id="aiPrev"></div></div>
     <form class="add" id="addStep"><input id="stepIn" placeholder="Nächster kleiner Schritt (15–30 Min)" autocomplete="off"><button>Dazu</button></form>
   </section>
 
-  <section data-block="coach" id="coach" hidden>
+  <section data-block="coach" id="coach">
     <h2>Frag deinen Coach</h2>
-    <div id="chat" class="chat"></div>
-    <form class="add" id="askForm"><input id="askIn" placeholder="z. B. Wie fange ich mit dem ersten Video an?" autocomplete="off"><button>Fragen</button></form>
+        <div class="tip">Stell deine Frage. Die App gibt deiner KI automatisch dein Ziel, deinen Fokus und deine Blockaden mit.</div>
+    <textarea id="askIn" placeholder="z. B. Wie fange ich mit dem ersten Schritt an, wenn ich keine Lust habe?"></textarea>
+    <div class="row" id="askBtns"></div>
   </section>
 
   <section data-block="pics" id="pics">
@@ -424,7 +439,7 @@ function render(){
   $("plan").innerHTML=open.length?open.map((s,i)=>`<li><span class="n">${i+1}</span><span class="t">${esc(s.text)}</span><button class="x" data-del="${s.id}" aria-label="Schritt löschen">×</button></li>`).join(""):`<li class="empty">Noch keine Schritte geplant.</li>`;
   $("addStep").hidden=!g;
   // Ideen
-  $("ideas").innerHTML=S.ideas.length?S.ideas.map(i=>`<li><span class="t">${esc(i.text)}</span>${ai?`<button class="mini" data-plan="${i.id}">Bauplan</button>`:""}<button class="mini" data-focus="${i.id}">Fokus</button><button class="x" data-idel="${i.id}" aria-label="Idee löschen">×</button></li>`).join(""):`<li class="empty">Hier landet alles, was dir einfällt. Du musst es nicht sofort umsetzen.</li>`;
+  $("ideas").innerHTML=S.ideas.length?S.ideas.map(i=>`<li><span class="t">${esc(i.text)}</span><button class="mini" data-plan="${i.id}">Bauplan</button><button class="mini" data-focus="${i.id}">Fokus</button><button class="x" data-idel="${i.id}" aria-label="Idee löschen">×</button></li>`).join(""):`<li class="empty">Hier landet alles, was dir einfällt. Du musst es nicht sofort umsetzen.</li>`;
   // Vision
   $("visionBox").innerHTML=`<div class="vision">${esc(S.vision)}</div><div class="row"><button class="link" id="editV">Ändern</button></div>`;
   $("editV").onclick=()=>{$("visionBox").innerHTML=`<textarea id="vIn">${esc(S.vision)}</textarea><div class="row"><button class="mini" id="vOk">Speichern</button></div>`;
@@ -487,26 +502,12 @@ const URLS={};let urlBusy=false;
 function picUrl(path){if(URLS[path])return URLS[path];fetchUrls();return "data:image/gif;base64,R0lGODlhAQABAAAAACw="}
 async function fetchUrls(){if(urlBusy||!SB)return;const need=(S.pics||[]).map(p=>p.asset).filter(a=>!URLS[a]);if(!need.length)return;urlBusy=true;
   try{const {data}=await SB.storage.from("bilder").createSignedUrls(need,60*60*24*7);(data||[]).forEach(d=>{if(d.signedUrl)URLS[d.path]=d.signedUrl});render()}catch(e){}urlBusy=false}
-function ctx(){const g=goal();return `Du bist ein warmherziger, direkter Coach in der App "Meisterstück". Sie hilft Menschen, ihre Ziele Schritt für Schritt durchzuziehen, ohne sich zu überfordern. Antworte immer auf Deutsch, kurz (max. 6 Sätze), konkret und ermutigend. Schlage eher kleine 15–30-Minuten-Schritte vor.
-Großes Ziel des Nutzers: ${S.vision}
+function ctx(){const g=goal();return `Sei mein warmherziger, direkter Coach. Ich nutze die App "Meisterstück", die mir hilft, meine Ziele Schritt für Schritt durchzuziehen, ohne mich zu überfordern. Antworte auf Deutsch, kurz (max. 6 Sätze), konkret und ermutigend. Schlage eher kleine 15–30-Minuten-Schritte vor.\nMein Stand:
+Mein großes Ziel: ${S.vision}
 Aktueller Fokus: ${g?g.title:"keiner"}
 Geplante Schritte: ${g&&g.steps.length?g.steps.map(x=>x.text).join("; "):"keine"}
 Manifest heute: ${(S.man||[]).find(m=>m.d===day())?.t||"–"}
 Letzte Blockaden: ${(S.checks||[]).slice(0,3).map(c=>c.block).filter(Boolean).join("; ")||"–"}`}
-function renderChat(){$("chat").innerHTML=hist.map(m=>`<div class="msg ${m.role==="user"?"me":"ai"}">${esc(m.content)}</div>`).join("")}
-$("askForm").onsubmit=async e=>{e.preventDefault();const q=$("askIn").value.trim();if(!q||!ai)return;$("askIn").value="";
-  hist.push({role:"user",content:q});const a={role:"assistant",content:"Denkt nach …"};hist.push(a);renderChat();
-  const msgs=hist.slice(0,-1).map((m,i)=>i===0?{role:"user",content:ctx()+"\n\nFrage: "+m.content}:m);
-  try{const r=await ai(msgs,{cache:false,onText:({text})=>{a.content=text;renderChat()}});a.content=r.text}
-  catch(err){a.content=err.code==="rate_limited"?"Gerade zu viele Anfragen. Versuch es in ein paar Minuten nochmal.":"Das hat nicht geklappt. Versuch es nochmal."}
-  renderChat()};
-$("aiSplit").onclick=async()=>{const g=goal();if(!g||!ai)return;const b=$("aiSplit");b.disabled=true;b.textContent="Zerlegt …";
-  try{const steps=await ai.json(ctx()+`\n\nZerlege das Fokus-Ziel "${g.title}" in 5 bis 7 aufeinanderfolgende, sehr kleine Schritte, jeder in 15–30 Minuten machbar und konkret formuliert (max. 12 Wörter). Antworte nur mit einem JSON-Array aus Strings.`);
-    const list=(Array.isArray(steps)?steps:[]).filter(x=>typeof x==="string").slice(0,7);
-    $("aiPrev").innerHTML=list.length?`<ul>${list.map((t,i)=>`<li><span class="n">${i+1}</span><span class="t">${esc(t)}</span></li>`).join("")}</ul><div class="row"><button class="mini" id="aiTake">Alle übernehmen</button><button class="link" id="aiNo">Verwerfen</button></div>`:"<div class='empty'>Keine Vorschläge bekommen. Versuch es nochmal.</div>";
-    if(list.length){$("aiTake").onclick=()=>{list.forEach(t=>g.steps.push({id:uid(),text:t}));$("aiPrev").innerHTML="";save()};$("aiNo").onclick=()=>$("aiPrev").innerHTML=""}
-  }catch(err){$("aiPrev").innerHTML="<div class='empty'>Das hat nicht geklappt. Versuch es nochmal.</div>"}
-  b.disabled=false;b.textContent="✨ Mit KI in kleine Schritte zerlegen"};
 function showPlan(i){const P=i.plan,pb=$("planBox");
   pb.innerHTML=`<div class="bp"><div class="ttl">Bauplan</div><h3>${esc(i.text)}</h3>
    ${P.ziel?`<div>${esc(P.ziel)}</div>`:""}
@@ -520,14 +521,29 @@ function showPlan(i){const P=i.plan,pb=$("planBox");
     S.ideas=S.ideas.filter(x=>x!==i);if(g)S.ideas.push({id:uid(),text:g.title,steps:g.steps});
     const ng={id:uid(),title:i.text,steps,plan:P};S.goals=[ng];S.focus=ng.id;pb.innerHTML="";save();window.scrollTo(0,0)};
   pb.scrollIntoView({behavior:"smooth",block:"start"})}
-async function makePlan(id){const i=S.ideas.find(x=>x.id===id);if(!i||!ai)return;if(i.plan)return showPlan(i);
-  $("planBox").innerHTML='<div class="bp"><div class="ttl">Bauplan</div><div>Die KI erstellt deinen Bauplan …</div></div>';
-  try{const P=await ai.json(ctx()+`\n\nDer Nutzer will diese Idee umsetzen: "${i.text}". Erstelle einen praxisnahen Bauplan für jemanden, der bei null anfängt und sich schnell überfordert fühlt. Antworte nur mit JSON in dieser Form:
-{"ziel":"ein Satz, was am Ende steht","ersterSchritt":"ein Schritt für heute, max. 15 Minuten","phasen":[{"name":"kurzer Name","schritte":["konkreter Schritt, max. 12 Wörter"]}],"werkzeuge":["Werkzeug, App oder Ressource, möglichst kostenlos"],"stolpersteine":["typisches Problem – und wie man es löst"]}
-3 bis 4 Phasen (z. B. Klären, Testen, Bauen, Zeigen), je 3 bis 5 Schritte. Alles auf Deutsch.`);
-    if(!P||!Array.isArray(P.phasen))throw 0;i.plan=P;save();showPlan(i)}
-  catch(e){$("planBox").innerHTML='<div class="bp"><div>Der Bauplan hat nicht geklappt. Versuch es nochmal.</div></div>'}}
-(async()=>{try{ai=await window.claude?.use?.("sample");if(ai){$("coach").hidden=false;$("aiSplitBox").hidden=false;render()}}catch(e){}})();
+// KI-Brücke: Anfrage kopieren, eigene KI öffnen, Antwort zurück einfügen
+const AIS=[["Claude","https://claude.ai/new?q="],["ChatGPT","https://chatgpt.com/?q="],["Gemini","https://gemini.google.com/app"]];
+let brPrompt="",brCb=null;
+function bridge(title,prompt,cb){brPrompt=prompt;brCb=cb;$("brTitle").textContent=title;$("brCopied").textContent="";$("brIn").value="";$("brMsg").textContent="";
+  $("brBack").hidden=!cb;$("brBtns").innerHTML=AIS.map(([n,u],i)=>`<a class="btn aibtn" data-ai="${i}" href="${u.endsWith("=")?u+encodeURIComponent(prompt):u}" target="_blank" rel="noopener">${n}</a>`).join("");$("bridge").hidden=false}
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const x=document.createElement("textarea");x.value=t;document.body.appendChild(x);x.select();let ok=false;try{ok=document.execCommand("copy")}catch(_){}x.remove();return ok}}
+$("brBtns").addEventListener("click",e=>{const a=e.target.closest("a");if(!a)return;copyText(brPrompt).then(ok=>$("brCopied").textContent=ok?"Anfrage kopiert. In der KI einfügen und senden.":"Kopieren ging nicht. Die Frage steht aber schon im Eingabefeld der KI.")});
+$("brClose").onclick=()=>{$("bridge").hidden=true};
+$("brOk").onclick=()=>{const t=$("brIn").value.trim();if(!t){$("brIn").focus();return}const r=brCb&&brCb(t);if(r===false){$("brMsg").textContent="Daraus konnte ich keine Schritte lesen. Kopier bitte die ganze Antwort.";return}$("bridge").hidden=true};
+function parseJSON(t){const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a<0||b<a)return null;try{return JSON.parse(t.slice(a,b+1))}catch(e){return null}}
+function parseLines(t){return t.split(/\n/).map(l=>l.trim()).filter(l=>/^([-*•]|\d+[.)])\s+/.test(l)).map(l=>l.replace(/^([-*•]|\d+[.)])\s+/,"").replace(/\*\*/g,"").trim()).filter(Boolean).slice(0,12)}
+$("askBtns").innerHTML=AIS.map(([n],i)=>`<button class="aibtn" data-ask="${i}">${n}</button>`).join("");
+$("askBtns").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const q=$("askIn").value.trim();if(!q){$("askIn").focus();return}
+  const [n,u]=AIS[+b.dataset.ask],pr=ctx()+"\n\nMeine Frage: "+q;copyText(pr);window.open(u.endsWith("=")?u+encodeURIComponent(pr):u,"_blank");toast("Frage kopiert. In "+n+" einfügen, falls sie nicht schon drinsteht.")});
+$("aiSplit").onclick=()=>{const g=goal();if(!g)return;
+  bridge("Schritte zerlegen",ctx()+`\n\nZerlege mein Fokus-Ziel "${g.title}" in 5 bis 7 aufeinanderfolgende, sehr kleine Schritte, jeder in 15–30 Minuten machbar und konkret (max. 12 Wörter). Antworte nur mit einer Liste, jede Zeile beginnt mit "- ".`,
+  t=>{const l=parseLines(t);if(!l.length)return false;l.forEach(x=>g.steps.push({id:uid(),text:x}));save();toast(l.length+" Schritte übernommen")})};
+function makePlan(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;if(i.plan)return showPlan(i);
+  bridge("Bauplan erstellen",ctx()+`\n\nIch will diese Idee umsetzen: "${i.text}". Erstelle einen praxisnahen Bauplan für jemanden, der bei null anfängt und sich schnell überfordert fühlt. Antworte NUR mit JSON in dieser Form:
+{"ziel":"ein Satz, was am Ende steht","ersterSchritt":"ein Schritt für heute, max. 15 Minuten","phasen":[{"name":"kurzer Name","schritte":["konkreter Schritt, max. 12 Wörter"]}],"werkzeuge":["Werkzeug, App oder Ressource, möglichst kostenlos"],"stolpersteine":["typisches Problem und wie man es löst"]}
+3 bis 4 Phasen (z. B. Klären, Testen, Bauen, Zeigen), je 3 bis 5 Schritte. Alles auf Deutsch.`,
+  t=>{let P=parseJSON(t);if(!P||!Array.isArray(P.phasen)){const l=parseLines(t);if(!l.length)return false;P={ersterSchritt:l[0],phasen:[{name:"Schritte",schritte:l.slice(1)}]}}
+    i.plan=P;save();showPlan(i)})}
 
 render();
 // Konto & Cloud-Speicherung (Supabase)
