@@ -133,7 +133,6 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
     <label for="manIn" class="mq" id="mQ">Was manifestierst du heute?</label>
     <textarea id="manIn" placeholder="z. B. Ich bin Creator und ziehe heute meinen Schritt durch."></textarea>
     <button class="big" id="manOk">Festhalten</button>
-    <button class="link" id="manSkip" type="button">Heute überspringen</button>
     <div class="mcount" id="mCount"></div>
   </div>
 </div>
@@ -249,11 +248,10 @@ function render(){
   S.man=S.man||[];
   const todayMan=S.man.find(m=>m.d===day());
   const onb=!S.vision;
-  $("morning").hidden=!(onb||(S.morningOn!==false && !todayMan && S.mShown!==day()));
-  if(!onb&&!$("morning").hidden&&S.mShown!==day()){S.mShown=day();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+  $("morning").hidden=!(onb||(S.morningOn!==false && !todayMan));
   if(onb){$("mLbl").textContent="Willkommen bei Meisterstück";$("mVision").textContent="Was willst du in deinem Leben erreichen?";
-    $("mQ").textContent="Schreib dein großes Ziel auf. Du kannst es jederzeit ändern.";$("manIn").placeholder="z. B. Eigene Firma gründen, 10 kg abnehmen, ein Haus bauen";$("manOk").textContent="Los geht's";$("mCount").textContent="";$("manSkip").hidden=true;}
-  else if(!$("morning").hidden){$("mLbl").textContent="Guten Morgen · bevor es losgeht";$("mQ").textContent="Was manifestierst du heute?";$("manIn").placeholder="z. B. Ich ziehe heute meinen Schritt durch.";$("manOk").textContent="Festhalten";$("manSkip").hidden=false;$("mVision").textContent=S.vision;
+    $("mQ").textContent="Schreib dein großes Ziel auf. Du kannst es jederzeit ändern.";$("manIn").placeholder="z. B. Eigene Firma gründen, 10 kg abnehmen, ein Haus bauen";$("manOk").textContent="Los geht's";$("mCount").textContent="";}
+  else if(!$("morning").hidden){$("mLbl").textContent="Guten Morgen · bevor es losgeht";$("mQ").textContent="Was manifestierst du heute?";$("manIn").placeholder="z. B. Ich ziehe heute meinen Schritt durch.";$("manOk").textContent="Festhalten";$("mVision").textContent=S.vision;
     $("mCount").textContent=S.man.length?`Du hast schon an ${S.man.length} Tagen manifestiert.`:"Dein erster Tag. Ein Satz reicht.";}
   const g=goal(), open=g?g.steps:[], doneToday=S.log.some(l=>l.d===day());
   const T=$("today");
@@ -328,7 +326,6 @@ $("addStep").onsubmit=e=>{e.preventDefault();const g=goal(),v=$("stepIn").value.
 $("manOk").onclick=()=>{const v=$("manIn").value.trim();if(!v){$("manIn").focus();return}if(!S.vision){S.vision=v;$("manIn").value="";save();window.scrollTo(0,0);return}S.man.unshift({d:day(),t:v});$("manIn").value="";save();window.scrollTo(0,0)};
 $("addRw").onsubmit=e=>{e.preventDefault();const t=$("rwIn").value.trim(),l=parseInt($("rwLvl").value,10);
   if(!t){$("rwIn").focus();return}if(!(l>=2)){$("rwLvl").focus();return}rewards().push({id:uid(),lvl:l,text:t,done:false});$("rwIn").value="";$("rwLvl").value="";save()};
-$("manSkip").onclick=()=>{$("morning").hidden=true};
 $("addIdea").onsubmit=e=>{e.preventDefault();const v=$("ideaIn").value.trim();if(!v)return;S.ideaCount=(S.ideaCount||S.ideas.length)+1;S.ideas.unshift({id:uid(),text:v});$("ideaIn").value="";save()};
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const g=goal();
   if(b.dataset.del&&g){g.steps=g.steps.filter(s=>s.id!==b.dataset.del);save()}
