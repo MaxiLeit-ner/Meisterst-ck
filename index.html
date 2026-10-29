@@ -224,7 +224,7 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
       <div class="row"><button class="big" id="picOk">Speichern</button><button type="button" class="link" id="picNo">Abbrechen</button></div>
     </form>
     <input type="file" id="picFile" accept="image/*" hidden>
-    <div class="empty" id="picNote" hidden>Bilder kommen mit einem der nächsten Updates.</div>
+    <div class="empty" id="picNote" hidden>Melde dich an, um Bilder zu speichern.</div>
   </section>
 
   <section data-block="rewards">
@@ -349,7 +349,7 @@ function render(){
   $("rewards").innerHTML=RW.length?RW.map(r=>{const ok=r.lvl<=C.L;return `<li class="${r.done?"rdone":ok?"":"rlocked"}"><span class="rlv">Lvl ${r.lvl}</span><span class="t">${esc(r.text)}</span>${r.done?'<span class="tag">Eingelöst</span>':ok?`<button class="mini" data-redeem="${r.id}">Einlösen</button>`:'<span class="tag">Gesperrt</span>'}<button class="x" data-rdel="${r.id}" aria-label="Belohnung löschen">×</button></li>`}).join(""):`<li class="empty">Was gönnst du dir, wenn du ein Level erreichst?</li>`;
   // Bilder
   S.pics=S.pics||[];
-  const pic=p=>`<div class="pic"><img src="/_blob/${p.asset}" alt="${esc(p.cap)}" loading="lazy"><div class="cap">${esc(p.cap)}${p.kind==="win"?`<small>Geschafft am ${p.d.slice(8)}.${p.d.slice(5,7)}.${p.d.slice(0,4)}</small>`:""}</div>${p.kind==="vision"?`<button class="mini mv" data-won="${p.id}">Geschafft!</button>`:""}<button class="x" data-pdel="${p.id}" aria-label="Bild entfernen">×</button></div>`;
+  const pic=p=>`<div class="pic"><img src="${picUrl(p.asset)}" alt="${esc(p.cap)}" loading="lazy"><div class="cap">${esc(p.cap)}${p.kind==="win"?`<small>Geschafft am ${p.d.slice(8)}.${p.d.slice(5,7)}.${p.d.slice(0,4)}</small>`:""}</div>${p.kind==="vision"?`<button class="mini mv" data-won="${p.id}">Geschafft!</button>`:""}<button class="x" data-pdel="${p.id}" aria-label="Bild entfernen">×</button></div>`;
   $("galVision").innerHTML=S.pics.filter(p=>p.kind==="vision").map(pic).join("")+(assets?`<button class="addpic" data-addpic="vision">+ Ziel-Bild</button>`:"");
   $("galWin").innerHTML=S.pics.filter(p=>p.kind==="win").map(pic).join("")+(assets?`<button class="addpic" data-addpic="win">+ Erfolg</button>`:"");
   $("picNote").hidden=!!assets;
@@ -394,7 +394,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   if(b.dataset.rdel){S.rewards=rewards().filter(x=>x.id!==b.dataset.rdel);save()}
   if(b.dataset.plan)makePlan(b.dataset.plan);
   if(b.dataset.addpic){picKind=b.dataset.addpic;$("picFile").click()}
-  if(b.dataset.pdel){S.pics=S.pics.filter(p=>p.id!==b.dataset.pdel);save()}
+  if(b.dataset.pdel){const d=S.pics.find(p=>p.id===b.dataset.pdel);if(d&&SB)SB.storage.from("bilder").remove([d.asset]).catch(()=>{});S.pics=S.pics.filter(p=>p.id!==b.dataset.pdel);save()}
   if(b.dataset.won){const p=S.pics.find(x=>x.id===b.dataset.won);if(p){p.kind="win";p.d=day();save();toast("Geschafft! +50 XP")}}
   if(b.dataset.idel){S.ideas=S.ideas.filter(i=>i.id!==b.dataset.idel);save()}
   if(b.dataset.focus){const i=S.ideas.find(x=>x.id===b.dataset.focus);S.ideas=S.ideas.filter(x=>x!==i);
@@ -421,7 +421,11 @@ $("picForm").onsubmit=async e=>{e.preventDefault();const cap=$("picCap").value.t
   try{const r=await assets.upload(picBlob);S.pics.unshift({id:uid(),asset:r.id,cap,kind:picKind,d:day()});$("picForm").hidden=true;$("picCap").value="";picBlob=null;save();if(picKind==="win")toast("Erfolg gespeichert! +50 XP")}
   catch(err){toast("Hochladen hat nicht geklappt. Versuch es nochmal.")}
   b.disabled=false;b.textContent="Speichern"};
-(async()=>{try{assets=await window.claude?.use?.("assets");render()}catch(e){}})();
+// Bilder: privat pro Nutzer, Anzeige über zeitlich begrenzte Links
+const URLS={};let urlBusy=false;
+function picUrl(path){if(URLS[path])return URLS[path];fetchUrls();return "data:image/gif;base64,R0lGODlhAQABAAAAACw="}
+async function fetchUrls(){if(urlBusy||!SB)return;const need=(S.pics||[]).map(p=>p.asset).filter(a=>!URLS[a]);if(!need.length)return;urlBusy=true;
+  try{const {data}=await SB.storage.from("bilder").createSignedUrls(need,60*60*24*7);(data||[]).forEach(d=>{if(d.signedUrl)URLS[d.path]=d.signedUrl});render()}catch(e){}urlBusy=false}
 function ctx(){const g=goal();return `Du bist ein warmherziger, direkter Coach in der App "Meisterstück". Sie hilft Menschen, ihre Ziele Schritt für Schritt durchzuziehen, ohne sich zu überfordern. Antworte immer auf Deutsch, kurz (max. 6 Sätze), konkret und ermutigend. Schlage eher kleine 15–30-Minuten-Schritte vor.
 Großes Ziel des Nutzers: ${S.vision}
 Aktueller Fokus: ${g?g.title:"keiner"}
@@ -468,6 +472,7 @@ render();
 // Konto & Cloud-Speicherung (Supabase)
 const SB=window.supabase?window.supabase.createClient("https://ukeebtbldtucultdhtba.supabase.co","sb_publishable_ElFCQKmpadN8HHbBKQn9VA_k2N2skYw"):null;
 async function startCloud(user){
+  assets={upload:async blob=>{const path=user.id+"/"+uid()+Date.now()+".jpg";const {error}=await SB.storage.from("bilder").upload(path,blob,{contentType:"image/jpeg"});if(error)throw error;return {id:path}}};
   ref={set:data=>SB.from("app_state").upsert({user_id:user.id,data,updated_at:new Date().toISOString()}).then(r=>{if(r.error)throw r.error})};
   $("authBox").hidden=true;$("acct").textContent="Angemeldet als "+user.email;$("logout").hidden=false;
   const {data,error}=await SB.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
