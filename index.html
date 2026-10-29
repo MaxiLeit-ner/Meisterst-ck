@@ -131,6 +131,22 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
 .sw i::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:var(--surface);transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .sw input:checked+i{background:var(--green)}.sw input:checked+i::after{transform:translateX(22px)}
 .sw input:focus-visible+i{outline:3px solid var(--ruler);outline-offset:2px}
+.tabs{display:flex;gap:4px;background:var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
+.tabs button{flex:1;background:transparent;color:var(--muted);padding:8px;font-size:.9rem}
+.tabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.rgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.rv{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px}
+.rv b{font-family:var(--display);font-size:1.9rem;line-height:1;display:block;font-variant-numeric:tabular-nums}
+.rv span{font-size:.85rem;color:var(--muted)}
+.dl{font-size:.8rem;font-weight:600;margin-top:4px}.dl.up{color:var(--ok)}.dl.dn{color:#b4532a}.dl.eq{color:var(--muted)}
+.cal{display:grid;gap:3px;margin-top:14px}
+.cal i{aspect-ratio:1;border-radius:3px;background:var(--line);max-width:100%}
+.cal i.l1{background:color-mix(in srgb,var(--green) 35%,var(--line))}.cal i.l2{background:color-mix(in srgb,var(--green) 65%,var(--line))}.cal i.l3{background:var(--green)}
+.cal i.fut{opacity:.35}.cal i.now{outline:2px solid var(--ruler);outline-offset:1px}
+.calw{grid-template-columns:repeat(7,minmax(0,1fr))}.calw i{border-radius:8px}
+.caly{grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:2px;overflow-x:auto}.caly i{width:9px;border-radius:2px}
+.calcap{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:6px}
+.revmsg{margin-top:12px;font-weight:600}
 .save{font-size:.8rem;color:var(--muted);text-align:center}
 .morning{position:fixed;inset:0;z-index:20;background:var(--green);color:var(--bg);overflow:auto;
   padding:calc(env(safe-area-inset-top,0px) + 32px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) max(20px,env(safe-area-inset-left,0px))}
@@ -197,6 +213,12 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
     <h2>Zollstock · erledigte Schritte</h2>
     <div class="ruler"><div class="fill" id="fill"></div><div class="ticks" id="ticks"></div></div>
     <div class="rcap"><span><b id="total">0</b> Schritte geschafft</span><span id="next"></span></div>
+  </section>
+
+  <section data-block="review">
+    <h2>Rückblick</h2>
+    <div class="tabs" role="tablist"><button data-per="w" class="on">Woche</button><button data-per="m">Monat</button><button data-per="y">Jahr</button></div>
+    <div id="rev"></div>
   </section>
 
   <section data-block="plan">
@@ -289,7 +311,7 @@ function stats(){const man=(S.man||[]).length,ck=(S.checks||[]).length,st=S.log.
   return{xp,L,rest,need:L*100,man,ck,st,id,perfect}}
 let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
 let lastXp=null;
-const BLOCKS={char:"Level & Charakter",today:"Tagesquest",ruler:"Zollstock",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
+const BLOCKS={char:"Level & Charakter",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
 function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>all.includes(x.id));all.forEach(id=>{if(!L.find(x=>x.id===id))L.push({id,on:true})});S.layout=L;
   const w=document.querySelector(".wrap"),end=$("save");
   L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}})}
@@ -303,6 +325,43 @@ $("blocks").addEventListener("click",e=>{const b=e.target.closest("button");if(!
   if(b.dataset.dn){const i=+b.dataset.dn;[L[i+1],L[i]]=[L[i],L[i+1]]}
   layout();renderSett()});
 $("blocks").addEventListener("change",e=>{const i=e.target.dataset.tog;if(i===undefined)return;S.layout[+i].on=e.target.checked;layout()});
+let per="w";
+const iso=d=>day(d);
+function dayScore(){const m={};const add=(d,n)=>m[d]=(m[d]||0)+n;
+  S.log.forEach(l=>add(l.d,1));(S.man||[]).forEach(x=>add(x.d,1));(S.checks||[]).forEach(x=>add(x.d,1));return m}
+function bounds(p,ref){const d=new Date(ref);d.setHours(0,0,0,0);let a;
+  if(p==="w"){a=new Date(d);a.setDate(d.getDate()-((d.getDay()+6)%7))}
+  else if(p==="m")a=new Date(d.getFullYear(),d.getMonth(),1);else a=new Date(d.getFullYear(),0,1);return a}
+function count(from,to){const f=iso(from),t=iso(to),inR=x=>x.d>=f&&x.d<=t;
+  const st=S.log.filter(inR).length,man=(S.man||[]).filter(inR).length,ck=(S.checks||[]).filter(inR).length,win=(S.pics||[]).filter(p=>p.kind==="win"&&inR(p)).length;
+  const days=new Set(S.log.filter(inR).map(l=>l.d)),perf=(S.man||[]).filter(m=>inR(m)&&days.has(m.d)).length;
+  return{st,man,ck,win,xp:st*20+man*10+ck*15+win*50+perf*10,act:new Set([...S.log,...(S.man||[]),...(S.checks||[])].filter(inR).map(x=>x.d)).size}}
+function delta(a,b){if(!b&&!a)return'<div class="dl eq">wie davor</div>';if(!b)return'<div class="dl up">neu ↑</div>';const p=Math.round((a-b)/b*100);
+  return p>0?`<div class="dl up">+${p} % ↑</div>`:p<0?`<div class="dl dn">${p} % ↓</div>`:'<div class="dl eq">gleich wie davor</div>'}
+function renderReview(){const now=new Date();now.setHours(0,0,0,0);const a=bounds(per,now),el=Math.round((now-a)/864e5);
+  const pa=new Date(a);if(per==="w")pa.setDate(pa.getDate()-7);else if(per==="m")pa.setMonth(pa.getMonth()-1);else pa.setFullYear(pa.getFullYear()-1);
+  const pe=new Date(pa);pe.setDate(pe.getDate()+el);
+  const c=count(a,now),p=count(pa,pe),lbl={w:"letzte Woche",m:"letzten Monat",y:"letztes Jahr"}[per];
+  const sc=dayScore(),lv=n=>!n?"":n>=3?"l3":n===2?"l2":"l1";
+  let cal="",cls="";
+  if(per==="w"){cls="calw";for(let i=0;i<7;i++){const d=new Date(a);d.setDate(a.getDate()+i);const k=iso(d);cal+=`<i class="${lv(sc[k])} ${d>now?"fut":""} ${k===iso(now)?"now":""}" title="${k}"></i>`}
+    cal+='</div><div class="calcap"><span>Mo</span><span>Mi</span><span>Fr</span><span>So</span>'}
+  else if(per==="m"){cls="calw";const off=(a.getDay()+6)%7;for(let i=0;i<off;i++)cal+='<i style="visibility:hidden"></i>';
+    const n=new Date(a.getFullYear(),a.getMonth()+1,0).getDate();for(let i=0;i<n;i++){const d=new Date(a);d.setDate(i+1);const k=iso(d);cal+=`<i class="${lv(sc[k])} ${d>now?"fut":""} ${k===iso(now)?"now":""}"></i>`}
+    cal+=`</div><div class="calcap"><span>${a.toLocaleDateString("de-DE",{month:"long",year:"numeric"})}</span><span>${c.act} aktive Tage</span>`}
+  else{cls="caly";const off=(a.getDay()+6)%7;for(let i=0;i<off;i++)cal+='<i style="visibility:hidden"></i>';
+    const e=new Date(a.getFullYear(),11,31);for(let d=new Date(a);d<=e;d.setDate(d.getDate()+1)){const k=iso(d);cal+=`<i class="${lv(sc[k])} ${d>now?"fut":""} ${k===iso(now)?"now":""}"></i>`}
+    cal+=`</div><div class="calcap"><span>Jan</span><span>${c.act} aktive Tage in ${a.getFullYear()}</span><span>Dez</span>`}
+  const msg=c.st>p.st?"Du bist auf dem Weg nach oben. Weiter so!":c.st&&c.st===p.st?"Konstant dabei. Genau so entsteht Fortschritt.":c.st?"Jeder Schritt zählt. Bleib dran.":"Noch kein Schritt in diesem Zeitraum. Heute ist ein guter Tag dafür.";
+  $("rev").innerHTML=`<div class="rgrid">
+    <div class="rv"><b>${c.st}</b><span>Schritte</span>${delta(c.st,p.st)}</div>
+    <div class="rv"><b>${c.xp}</b><span>XP verdient</span>${delta(c.xp,p.xp)}</div>
+    <div class="rv"><b>${c.man}</b><span>Manifest-Tage</span>${delta(c.man,p.man)}</div>
+    <div class="rv"><b>${c.win}</b><span>Erfolge</span>${delta(c.win,p.win)}</div></div>
+    <div class="calcap" style="margin-top:8px"><span>Vergleich mit dem gleichen Zeitraum ${lbl}</span></div>
+    <div class="cal ${cls}">${cal}</div><div class="revmsg">${msg}</div>`;
+  document.querySelectorAll("[data-per]").forEach(b=>b.classList.toggle("on",b.dataset.per===per))}
+document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{per=b.dataset.per;renderReview()});
 function render(){
   layout();
   $("date").textContent=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
@@ -370,6 +429,8 @@ function render(){
   $("visionBox").innerHTML=`<div class="vision">${esc(S.vision)}</div><div class="row"><button class="link" id="editV">Ändern</button></div>`;
   $("editV").onclick=()=>{$("visionBox").innerHTML=`<textarea id="vIn">${esc(S.vision)}</textarea><div class="row"><button class="mini" id="vOk">Speichern</button></div>`;
     $("vOk").onclick=()=>{S.vision=$("vIn").value.trim()||S.vision;save()}};
+  // Rückblick
+  renderReview();
   // Check-in
   S.checks=S.checks||[];const ck=S.checks.find(c=>c.d===day());
   $("checkBox").innerHTML=ck?`<div class="vision"><b>Lief gut:</b> ${esc(ck.good||"–")}<br><b>Blockiert:</b> ${esc(ck.block||"–")}${ck.next?`<br><b>Morgen zuerst:</b> ${esc(ck.next)}`:""}</div>`:
