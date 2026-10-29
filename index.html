@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#24493b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Meisterstück">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Meisterstück</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: eine Spalte wie ein Werkstattbrett – oben der heutige Schritt, darunter Zollstock, Plan, Ideen, Ziel */
+:root{
+  --bg:#eef1ee; --surface:#ffffff; --ink:#1d2622; --muted:#5f6b65; --line:#d6ddd8;
+  --green:#24493b; --ruler:#f2c230; --ruler-ink:#2a2510; --ok:#2f7a4f;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Figtree",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121815; --surface:#1b2420; --ink:#e7ece9; --muted:#9aa8a1; --line:#2c3833;
+  --green:#7fc0a2; --ruler:#e8b923; --ruler-ink:#231e08; --ok:#6fcf97; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121815; --surface:#1b2420; --ink:#e7ece9; --muted:#9aa8a1; --line:#2c3833;
+  --green:#7fc0a2; --ruler:#e8b923; --ruler-ink:#231e08; --ok:#6fcf97; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:560px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:28px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+h1{font-family:var(--display);font-size:2.2rem;line-height:1;margin:0;letter-spacing:.01em;text-transform:uppercase;color:var(--green)}
+.date{color:var(--muted);font-size:.85rem;margin-top:4px}
+.streak{text-align:right;font-family:var(--display);line-height:1}
+.streak b{font-size:2.2rem;display:block;font-variant-numeric:tabular-nums}
+.streak span{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h2{font-family:var(--display);font-size:1rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.today{background:var(--green);color:var(--bg);border-radius:14px;padding:22px 20px;display:flex;flex-direction:column;gap:14px}
+.today .lbl{font-family:var(--display);letter-spacing:.12em;text-transform:uppercase;font-size:.9rem;opacity:.8}
+.today .step{font-size:1.45rem;font-weight:600;line-height:1.3;text-wrap:balance}
+.today .goal{font-size:.9rem;opacity:.8}
+.today input{background:var(--bg);color:var(--ink)}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px;padding:12px 16px;font-weight:600}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--ruler);outline-offset:2px}
+.big{background:var(--ruler);color:var(--ruler-ink);font-size:1.05rem;padding:14px 18px}
+.ghost{background:transparent;color:inherit;border:1.5px solid currentColor;opacity:.85}
+.link{background:none;padding:4px 0;color:inherit;text-decoration:underline;font-weight:500;opacity:.8}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input,textarea{font:inherit;width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+textarea{min-height:90px;resize:vertical}
+.add{display:flex;gap:8px}.add input{flex:1;min-width:0}
+.add button{background:var(--green);color:var(--bg)}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+li{display:flex;gap:10px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line)}
+li .t{flex:1;min-width:0;overflow-wrap:anywhere}
+li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-numeric:tabular-nums}
+.x{background:none;color:var(--muted);padding:6px 10px;font-size:1.1rem}
+.mini{background:var(--surface);color:var(--green);border:1.5px solid var(--line);padding:6px 10px;font-size:.85rem}
+.empty{color:var(--muted);font-size:.95rem;padding:8px 0}
+/* Zollstock */
+.ruler{background:var(--ruler);color:var(--ruler-ink);border-radius:4px;height:56px;position:relative;overflow:hidden}
+.ruler .fill{position:absolute;inset:0 auto 0 0;background:rgba(0,0,0,.14);transition:width .5s}
+.ruler .ticks{position:absolute;inset:0;display:flex}
+.ruler .ticks i{flex:1;border-right:1px solid rgba(0,0,0,.35);position:relative}
+.ruler .ticks i::after{content:"";position:absolute;left:50%;top:0;height:9px;border-left:1px solid rgba(0,0,0,.3)}
+.ruler .ticks i:nth-child(5n){border-right-width:2px}
+.ruler .ticks i em{position:absolute;right:3px;bottom:3px;font-style:normal;font-family:var(--display);font-size:.8rem}
+.rcap{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-top:8px}
+.rcap b{color:var(--ink)}
+.vision{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:16px;font-size:1.05rem}
+.log li{font-size:.92rem;color:var(--muted)}
+.log .d{font-family:var(--display);width:4.2em;color:var(--ok)}
+.ck{display:flex;flex-direction:column;gap:8px}.ck label{font-weight:600;font-size:.95rem}.ck button{margin-top:6px}
+.ai{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.chat{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.msg{padding:10px 14px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;max-width:92%}
+.msg.me{align-self:flex-end;background:var(--green);color:var(--bg)}
+.msg.ai{align-self:flex-start;background:var(--surface);border:1.5px solid var(--line)}
+.char{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.chead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.lvl{font-family:var(--display);font-size:1.7rem;line-height:1;color:var(--green)}
+.ttl{font-family:var(--display);letter-spacing:.1em;text-transform:uppercase;font-size:.85rem;color:var(--muted)}
+.xpbar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.xpbar i{display:block;height:100%;background:var(--ruler);transition:width .5s}
+.xpcap{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+.stat{display:flex;justify-content:space-between;font-size:.9rem;border-bottom:1px dashed var(--line);padding-bottom:4px}.stat b{font-variant-numeric:tabular-nums}
+.unl{font-size:.9rem}.unl b{color:var(--green)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;font-weight:600;z-index:30;max-width:calc(100% - 32px);text-align:center}
+.rw #rwLvl{flex:0 0 5.5em}
+.rlv{font-family:var(--display);width:3.4em;color:var(--muted);font-variant-numeric:tabular-nums}
+.rlocked .t{color:var(--muted)}.rdone .t{text-decoration:line-through;color:var(--muted)}
+.tag{font-size:.75rem;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--line);color:var(--muted);white-space:nowrap}
+.tag.go{background:var(--ruler);color:var(--ruler-ink)}
+.bp{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px;margin-top:12px;display:flex;flex-direction:column;gap:14px}
+.bp h3{font-family:var(--display);font-size:1.4rem;margin:0;color:var(--green);text-wrap:balance}
+.bp h4{margin:0 0 4px;font-size:.95rem}
+.bp ol,.bp .ul2{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px;font-size:.95rem}
+.bp .first{background:var(--ruler);color:var(--ruler-ink);border-radius:10px;padding:10px 12px;font-weight:600}
+.gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pic{position:relative;border-radius:12px;overflow:hidden;background:var(--line);aspect-ratio:4/5;max-width:100%}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.pic .cap{position:absolute;inset:auto 0 0 0;padding:28px 10px 8px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;font-size:.88rem;font-weight:600;line-height:1.3}
+.pic .cap small{display:block;font-weight:400;opacity:.85}
+.pic .x{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.45);color:#fff;border-radius:50%;width:32px;height:32px;padding:0}
+.pic .mv{position:absolute;top:6px;left:6px;font-size:.75rem;padding:5px 9px}
+.addpic{aspect-ratio:4/5;border:2px dashed var(--line);background:transparent;color:var(--muted);border-radius:12px;font-weight:600;max-width:100%}
+.picf{display:flex;flex-direction:column;gap:8px;margin-top:14px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px}
+.picf img{max-height:240px;border-radius:10px;object-fit:cover;width:100%}
+.save{font-size:.8rem;color:var(--muted);text-align:center}
+.morning{position:fixed;inset:0;z-index:20;background:var(--green);color:var(--bg);overflow:auto;
+  padding:calc(env(safe-area-inset-top,0px) + 32px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) max(20px,env(safe-area-inset-left,0px))}
+.mwrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.morning .lbl{font-family:var(--display);letter-spacing:.12em;text-transform:uppercase;opacity:.8}
+.mvision{font-family:var(--display);font-size:1.9rem;line-height:1.15;text-wrap:balance}
+.mq{font-weight:600;font-size:1.1rem}
+.morning textarea{background:var(--bg);color:var(--ink);border:0}
+.mcount{opacity:.8;font-size:.9rem}
+.mantra{background:rgba(255,255,255,.12);border-left:3px solid var(--ruler);padding:8px 12px;border-radius:6px;font-style:italic}
+@media (prefers-reduced-motion:reduce){.ruler .fill{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="morning" id="morning" hidden>
+  <div class="mwrap">
+    <div class="lbl" id="mLbl">Guten Morgen · bevor es losgeht</div>
+    <div class="mvision" id="mVision"></div>
+    <label for="manIn" class="mq" id="mQ">Was manifestierst du heute?</label>
+    <textarea id="manIn" placeholder="z. B. Ich bin Creator und ziehe heute meinen Schritt durch."></textarea>
+    <button class="big" id="manOk">Festhalten</button>
+    <div class="mcount" id="mCount"></div>
+  </div>
+</div>
+<div class="wrap">
+  <header>
+    <div><h1>Meisterstück</h1><div class="date" id="date"></div></div>
+    <div class="streak"><b id="streak">0</b><span>Tage am Stück</span></div>
+  </header>
+
+  <section class="char" id="char"></section>
+
+  <section class="today" id="today" aria-live="polite"></section>
+
+  <section>
+    <h2>Zollstock · erledigte Schritte</h2>
+    <div class="ruler"><div class="fill" id="fill"></div><div class="ticks" id="ticks"></div></div>
+    <div class="rcap"><span><b id="total">0</b> Schritte geschafft</span><span id="next"></span></div>
+  </section>
+
+  <section>
+    <h2 id="planH">Fokus-Plan</h2>
+    <ul id="plan"></ul>
+    <div class="ai" id="aiSplitBox" hidden><button class="mini" id="aiSplit">✨ Mit KI in kleine Schritte zerlegen</button><div id="aiPrev"></div></div>
+    <form class="add" id="addStep"><input id="stepIn" placeholder="Nächster kleiner Schritt (15–30 Min)" autocomplete="off"><button>Dazu</button></form>
+  </section>
+
+  <section id="coach" hidden>
+    <h2>Frag deinen Coach</h2>
+    <div id="chat" class="chat"></div>
+    <form class="add" id="askForm"><input id="askIn" placeholder="z. B. Wie fange ich mit dem ersten Video an?" autocomplete="off"><button>Fragen</button></form>
+  </section>
+
+  <section id="pics">
+    <h2>Mein Visionboard · das will ich erreichen</h2>
+    <div class="gal" id="galVision"></div>
+    <h2 style="margin-top:22px">Erfolgswand · das habe ich geschafft</h2>
+    <div class="gal" id="galWin"></div>
+    <form class="picf" id="picForm" hidden>
+      <div id="picPrev"></div>
+      <label for="picCap" id="picLbl">Was ist das?</label>
+      <input id="picCap" autocomplete="off">
+      <div class="row"><button class="big" id="picOk">Speichern</button><button type="button" class="link" id="picNo">Abbrechen</button></div>
+    </form>
+    <input type="file" id="picFile" accept="image/*" hidden>
+    <div class="empty" id="picNote" hidden>Bilder kommen mit einem der nächsten Updates.</div>
+  </section>
+
+  <section>
+    <h2>Meine Belohnungen</h2>
+    <ul id="rewards"></ul>
+    <form class="add rw" id="addRw"><input id="rwIn" placeholder="z. B. Neues Mikrofon kaufen" autocomplete="off"><input id="rwLvl" type="number" min="2" max="99" placeholder="Level" aria-label="Ab Level"><button>Dazu</button></form>
+  </section>
+
+  <section>
+    <h2>Abend-Check-in</h2>
+    <div id="checkBox"></div>
+  </section>
+
+  <section>
+    <h2>Ideen-Parkplatz</h2>
+    <form class="add" id="addIdea"><input id="ideaIn" placeholder="Idee raus aus dem Kopf …" autocomplete="off"><button>Parken</button></form>
+    <ul id="ideas"></ul>
+    <div id="planBox"></div>
+  </section>
+
+  <section>
+    <h2>Wofür ich das mache</h2>
+    <div id="visionBox"></div>
+  </section>
+
+  <section class="log">
+    <h2>Zuletzt geschafft</h2>
+    <ul id="log"></ul>
+  </section>
+  <div class="save" id="save"></div>
+  <div class="toast" id="toast" role="status" hidden></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const day=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const LS="meisterstueck-v1";
+function starter(){const g=uid();return{
+  vision:"",focus:g,
+  goals:[{id:g,title:"Mein Start",steps:[
+    {id:uid(),text:"Alle Ideen aufschreiben und im Ideen-Parkplatz parken"},
+    {id:uid(),text:"Eine Idee auswählen und zum Fokus machen"},
+    {id:uid(),text:"Für diese Idee den allerersten kleinen Schritt aufschreiben"}]}],
+  ideas:[],log:[],man:[],morningOn:true,extra:null};}
+let S=null, db=null, ref=null, timer=null;
+try{S=JSON.parse(localStorage.getItem(LS))}catch(e){}
+if(!S)S=starter();
+
+const goal=()=>S.goals.find(g=>g.id===S.focus);
+function streak(){const days=new Set(S.log.map(l=>l.d));let n=0,d=new Date();
+  if(!days.has(day(d)))d.setDate(d.getDate()-1);
+  while(days.has(day(d))){n++;d.setDate(d.getDate()-1)}return n}
+function esc(s){const e=document.createElement("span");e.textContent=s;return e.innerHTML}
+
+const TITLES=[[1,"Neuling"],[3,"Lehrling"],[6,"Geselle"],[10,"Macher"],[15,"Meister"],[20,"Legende"]];
+const DEF_UNLOCKS=[[3,"Lieblingsessen gönnen"],[5,"Etwas Neues für dein Ziel kaufen"],[10,"Ein freier Tag nur für dich"]];
+function rewards(){if(!S.rewards)S.rewards=DEF_UNLOCKS.map(u=>({id:uid(),lvl:u[0],text:u[1],done:false}));S.rewards.sort((a,b)=>a.lvl-b.lvl);return S.rewards}
+function stats(){const man=(S.man||[]).length,ck=(S.checks||[]).length,st=S.log.length,id=S.ideaCount||S.ideas.length;
+  const days=new Set(S.log.map(l=>l.d)),perfect=(S.man||[]).filter(m=>days.has(m.d)).length;
+  const wins=(S.pics||[]).filter(p=>p.kind==="win").length;const xp=st*20+man*10+ck*15+id*5+perfect*10+wins*50;let L=1,rest=xp;while(rest>=L*100){rest-=L*100;L++}
+  return{xp,L,rest,need:L*100,man,ck,st,id,perfect}}
+let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
+let lastXp=null;
+function render(){
+  $("date").textContent=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
+  $("streak").textContent=streak();
+  S.man=S.man||[];
+  const todayMan=S.man.find(m=>m.d===day());
+  const onb=!S.vision;
+  $("morning").hidden=!(onb||(S.morningOn!==false && !todayMan));
+  if(onb){$("mLbl").textContent="Willkommen bei Meisterstück";$("mVision").textContent="Was willst du in deinem Leben erreichen?";
+    $("mQ").textContent="Schreib dein großes Ziel auf. Du kannst es jederzeit ändern.";$("manIn").placeholder="z. B. Eigene Firma gründen, 10 kg abnehmen, ein Haus bauen";$("manOk").textContent="Los geht's";$("mCount").textContent="";}
+  else if(!$("morning").hidden){$("mLbl").textContent="Guten Morgen · bevor es losgeht";$("mQ").textContent="Was manifestierst du heute?";$("manIn").placeholder="z. B. Ich ziehe heute meinen Schritt durch.";$("manOk").textContent="Festhalten";$("mVision").textContent=S.vision;
+    $("mCount").textContent=S.man.length?`Du hast schon an ${S.man.length} Tagen manifestiert.`:"Dein erster Tag. Ein Satz reicht.";}
+  const g=goal(), open=g?g.steps:[], doneToday=S.log.some(l=>l.d===day());
+  const T=$("today");
+  if(doneToday && S.extra!==day()){
+    T.innerHTML=`<div class="lbl">Heute</div><div class="step">Für heute geschafft. Stark.</div>
+      <div class="goal">Morgen wartet der nächste Schritt. Mehr musst du heute nicht.</div>
+      <div class="row"><button class="link" id="more">Ich hab noch Energie – noch ein Schritt</button></div>`;
+    $("more").onclick=()=>{S.extra=day();save()};
+  }else if(!g){
+    T.innerHTML=`<div class="lbl">Tagesquest · +20 XP</div><div class="step">Wähl eine Idee aus dem Parkplatz als Fokus.</div>`;
+  }else if(!open.length){
+    T.innerHTML=`<div class="lbl">Tagesquest · +20 XP</div><div class="goal">Fokus: ${esc(g.title)}</div>
+      <div class="step">Was ist der kleinste nächste Schritt?</div>
+      <form class="add" id="tIn"><input id="tStep" placeholder="z. B. 10 Min Notizen zur Idee" autocomplete="off"><button class="big">Los</button></form>`;
+    $("tIn").onsubmit=e=>{e.preventDefault();const v=$("tStep").value.trim();if(v){g.steps.push({id:uid(),text:v});save()}};
+  }else{
+    T.innerHTML=`<div class="lbl">Tagesquest · +20 XP</div><div class="goal">Fokus: ${esc(g.title)}</div>
+      <div class="step">${esc(open[0].text)}</div>
+      <div class="row"><button class="big" id="done">Erledigt ✓</button><button class="ghost" id="skip">Zu groß? Kleiner machen</button></div>`;
+    $("done").onclick=()=>{const s=g.steps.shift();S.log.unshift({d:day(),t:s.text,g:g.title});if(S.extra===day())S.extra=null;save()};
+    $("skip").onclick=()=>{$("stepIn").value="";$("stepIn").placeholder="Kleinerer Teil von: "+open[0].text.slice(0,40);$("stepIn").focus();$("stepIn").dataset.front="1"};
+  }
+  if(todayMan){const m=document.createElement("div");m.className="mantra";m.textContent="„"+todayMan.t+"“";T.prepend(m)}
+  // Charakter
+  const C=stats(),title=TITLES.filter(t=>t[0]<=C.L).pop()[1],RW=rewards(),nx=RW.find(u=>u.lvl>C.L),ready=RW.filter(u=>u.lvl<=C.L&&!u.done);
+  $("char").innerHTML=`<div class="chead"><div><div class="ttl">${title}</div><div class="lvl">Level ${C.L}</div></div><div class="xpcap">${C.xp} XP gesamt</div></div>
+   <div><div class="xpbar"><i style="width:${C.rest/C.need*100}%"></i></div><div class="xpcap">${C.rest} / ${C.need} XP bis Level ${C.L+1}</div></div>
+   <div class="stats"><div class="stat">Disziplin<b>${C.st}</b></div><div class="stat">Klarheit<b>${C.man}</b></div><div class="stat">Reflexion<b>${C.ck}</b></div><div class="stat">Kreativität<b>${C.id}</b></div></div>
+   <div class="unl">${ready.length?"Verdient und bereit: <b>"+ready.map(u=>esc(u.text)).join(", ")+"</b><br>":""}${nx?`Nächste Belohnung bei Level ${nx.lvl}: <b>${esc(nx.text)}</b>`:"Leg dir unten die nächste Belohnung fest."}</div>`;
+  if(lastXp!==null&&C.xp>lastXp){const pL=S.lvl||1;
+    if(C.L>pL){const u=RW.filter(x=>x.lvl>pL&&x.lvl<=C.L);toast(`Level ${C.L}!${u.length?" Belohnung verdient: "+u.map(x=>x.text).join(", "):""}`)}else toast(`+${C.xp-lastXp} XP`)}
+  S.lvl=C.L;lastXp=C.xp;
+  $("rewards").innerHTML=RW.length?RW.map(r=>{const ok=r.lvl<=C.L;return `<li class="${r.done?"rdone":ok?"":"rlocked"}"><span class="rlv">Lvl ${r.lvl}</span><span class="t">${esc(r.text)}</span>${r.done?'<span class="tag">Eingelöst</span>':ok?`<button class="mini" data-redeem="${r.id}">Einlösen</button>`:'<span class="tag">Gesperrt</span>'}<button class="x" data-rdel="${r.id}" aria-label="Belohnung löschen">×</button></li>`}).join(""):`<li class="empty">Was gönnst du dir, wenn du ein Level erreichst?</li>`;
+  // Bilder
+  S.pics=S.pics||[];
+  const pic=p=>`<div class="pic"><img src="/_blob/${p.asset}" alt="${esc(p.cap)}" loading="lazy"><div class="cap">${esc(p.cap)}${p.kind==="win"?`<small>Geschafft am ${p.d.slice(8)}.${p.d.slice(5,7)}.${p.d.slice(0,4)}</small>`:""}</div>${p.kind==="vision"?`<button class="mini mv" data-won="${p.id}">Geschafft!</button>`:""}<button class="x" data-pdel="${p.id}" aria-label="Bild entfernen">×</button></div>`;
+  $("galVision").innerHTML=S.pics.filter(p=>p.kind==="vision").map(pic).join("")+(assets?`<button class="addpic" data-addpic="vision">+ Ziel-Bild</button>`:"");
+  $("galWin").innerHTML=S.pics.filter(p=>p.kind==="win").map(pic).join("")+(assets?`<button class="addpic" data-addpic="win">+ Erfolg</button>`:"");
+  $("picNote").hidden=!!assets;
+  // Zollstock
+  const total=S.log.length, marks=[10,25,50,100,200,365,500,1000], goalN=marks.find(m=>m>total)||total+100;
+  const prev=[0,...marks].filter(m=>m<=total).pop()||0;
+  $("total").textContent=total;$("next").textContent="nächste Marke: "+goalN;
+  $("fill").style.width=Math.min(100,(total-prev)/(goalN-prev)*100)+"%";
+  const tk=$("ticks");if(!tk.children.length){for(let i=1;i<=10;i++){const t=document.createElement("i");if(i%2===0)t.innerHTML="<em></em>";tk.appendChild(t)}}
+  [...tk.querySelectorAll("em")].forEach((e,i)=>e.textContent=Math.round(prev+(goalN-prev)*(i+1)/5));
+  // Plan
+  $("planH").textContent=g?"Fokus-Plan · "+g.title:"Fokus-Plan";
+  $("plan").innerHTML=open.length?open.map((s,i)=>`<li><span class="n">${i+1}</span><span class="t">${esc(s.text)}</span><button class="x" data-del="${s.id}" aria-label="Schritt löschen">×</button></li>`).join(""):`<li class="empty">Noch keine Schritte geplant.</li>`;
+  $("addStep").hidden=!g;
+  // Ideen
+  $("ideas").innerHTML=S.ideas.length?S.ideas.map(i=>`<li><span class="t">${esc(i.text)}</span>${ai?`<button class="mini" data-plan="${i.id}">Bauplan</button>`:""}<button class="mini" data-focus="${i.id}">Fokus</button><button class="x" data-idel="${i.id}" aria-label="Idee löschen">×</button></li>`).join(""):`<li class="empty">Hier landet alles, was dir einfällt. Du musst es nicht sofort umsetzen.</li>`;
+  // Vision
+  $("visionBox").innerHTML=`<div class="vision">${esc(S.vision)}</div><div class="row"><button class="link" id="editV">Ändern</button><button class="link" id="mTog">Morgen-Modus: ${S.morningOn===false?"aus":"an"}</button></div>`;
+  $("mTog").onclick=()=>{S.morningOn=S.morningOn===false;save()};
+  $("editV").onclick=()=>{$("visionBox").innerHTML=`<textarea id="vIn">${esc(S.vision)}</textarea><div class="row"><button class="mini" id="vOk">Speichern</button></div>`;
+    $("vOk").onclick=()=>{S.vision=$("vIn").value.trim()||S.vision;save()}};
+  // Check-in
+  S.checks=S.checks||[];const ck=S.checks.find(c=>c.d===day());
+  $("checkBox").innerHTML=ck?`<div class="vision"><b>Lief gut:</b> ${esc(ck.good||"–")}<br><b>Blockiert:</b> ${esc(ck.block||"–")}${ck.next?`<br><b>Morgen zuerst:</b> ${esc(ck.next)}`:""}</div>`:
+   `<form class="ck" id="ckForm"><label for="ckGood">Was lief heute gut?</label><input id="ckGood" autocomplete="off"><label for="ckBlock">Was hat dich blockiert?</label><input id="ckBlock" autocomplete="off"><label for="ckNext">Was machst du morgen als Erstes?</label><input id="ckNext" placeholder="Ein kleiner Schritt" autocomplete="off"><button class="big">Tag abschließen</button></form>`;
+  if(!ck)$("ckForm").onsubmit=e=>{e.preventDefault();const c={d:day(),good:$("ckGood").value.trim(),block:$("ckBlock").value.trim(),next:$("ckNext").value.trim()};
+    if(!c.good&&!c.block&&!c.next){$("ckGood").focus();return}
+    S.checks.unshift(c);S.checks=S.checks.slice(0,60);const g2=goal();if(c.next&&g2)g2.steps.unshift({id:uid(),text:c.next});save()};
+  // Log
+  $("log").innerHTML=S.log.length?S.log.slice(0,7).map(l=>`<li><span class="d">${l.d.slice(8)}.${l.d.slice(5,7)}.</span><span class="t">${esc(l.t)}</span></li>`).join(""):`<li class="empty">Dein erster erledigter Schritt erscheint hier.</li>`;
+}
+
+$("addStep").onsubmit=e=>{e.preventDefault();const g=goal(),v=$("stepIn").value.trim();if(!g||!v)return;
+  const s={id:uid(),text:v};if($("stepIn").dataset.front){g.steps.unshift(s);delete $("stepIn").dataset.front}else g.steps.push(s);
+  $("stepIn").value="";$("stepIn").placeholder="Nächster kleiner Schritt (15–30 Min)";save()};
+$("manOk").onclick=()=>{const v=$("manIn").value.trim();if(!v){$("manIn").focus();return}if(!S.vision){S.vision=v;$("manIn").value="";save();window.scrollTo(0,0);return}S.man.unshift({d:day(),t:v});$("manIn").value="";save();window.scrollTo(0,0)};
+$("addRw").onsubmit=e=>{e.preventDefault();const t=$("rwIn").value.trim(),l=parseInt($("rwLvl").value,10);
+  if(!t){$("rwIn").focus();return}if(!(l>=2)){$("rwLvl").focus();return}rewards().push({id:uid(),lvl:l,text:t,done:false});$("rwIn").value="";$("rwLvl").value="";save()};
+$("addIdea").onsubmit=e=>{e.preventDefault();const v=$("ideaIn").value.trim();if(!v)return;S.ideaCount=(S.ideaCount||S.ideas.length)+1;S.ideas.unshift({id:uid(),text:v});$("ideaIn").value="";save()};
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const g=goal();
+  if(b.dataset.del&&g){g.steps=g.steps.filter(s=>s.id!==b.dataset.del);save()}
+  if(b.dataset.redeem){const r=rewards().find(x=>x.id===b.dataset.redeem);if(r){r.done=true;toast("Gönn es dir. Verdient ist verdient.");save()}}
+  if(b.dataset.rdel){S.rewards=rewards().filter(x=>x.id!==b.dataset.rdel);save()}
+  if(b.dataset.plan)makePlan(b.dataset.plan);
+  if(b.dataset.addpic){picKind=b.dataset.addpic;$("picFile").click()}
+  if(b.dataset.pdel){S.pics=S.pics.filter(p=>p.id!==b.dataset.pdel);save()}
+  if(b.dataset.won){const p=S.pics.find(x=>x.id===b.dataset.won);if(p){p.kind="win";p.d=day();save();toast("Geschafft! +50 XP")}}
+  if(b.dataset.idel){S.ideas=S.ideas.filter(i=>i.id!==b.dataset.idel);save()}
+  if(b.dataset.focus){const i=S.ideas.find(x=>x.id===b.dataset.focus);S.ideas=S.ideas.filter(x=>x!==i);
+    const ng={id:uid(),title:i.text,steps:i.steps||[]};
+    if(g)S.ideas.push({id:uid(),text:g.title,steps:g.steps});S.goals=[ng];S.focus=ng.id;save()}
+});
+
+function save(){render();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}
+  if(!ref){$("save").textContent=db===null?"Nur auf diesem Gerät gespeichert.":"";return}
+  clearTimeout(timer);$("save").textContent="Speichert …";
+  timer=setTimeout(()=>ref.set(JSON.parse(JSON.stringify(S))).then(()=>$("save").textContent="Gespeichert").catch(()=>$("save").textContent="Speichern fehlgeschlagen – auf diesem Gerät ist alles da."),500)}
+
+let ai=null, hist=[], assets=null, picKind="vision", picBlob=null;
+function shrink(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const m=1600,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(),"image/jpeg",.85)};im.onerror=rej;im.src=u})}
+$("picFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{picBlob=await shrink(f)}catch(err){picBlob=f}
+  $("picPrev").innerHTML=`<img src="${URL.createObjectURL(picBlob)}" alt="Vorschau">`;
+  $("picLbl").textContent=picKind==="win"?"Was hast du geschafft?":"Was willst du erreichen?";
+  $("picCap").placeholder=picKind==="win"?"z. B. Werkstatt ist gemietet":"z. B. 1000 Follower";
+  $("picForm").hidden=false;$("picCap").focus()};
+$("picNo").onclick=()=>{$("picForm").hidden=true;picBlob=null};
+$("picForm").onsubmit=async e=>{e.preventDefault();const cap=$("picCap").value.trim();if(!cap){$("picCap").focus();return}if(!picBlob||!assets)return;
+  const b=$("picOk");b.disabled=true;b.textContent="Lädt hoch …";
+  try{const r=await assets.upload(picBlob);S.pics.unshift({id:uid(),asset:r.id,cap,kind:picKind,d:day()});$("picForm").hidden=true;$("picCap").value="";picBlob=null;save();if(picKind==="win")toast("Erfolg gespeichert! +50 XP")}
+  catch(err){toast("Hochladen hat nicht geklappt. Versuch es nochmal.")}
+  b.disabled=false;b.textContent="Speichern"};
+(async()=>{try{assets=await window.claude?.use?.("assets");render()}catch(e){}})();
+function ctx(){const g=goal();return `Du bist ein warmherziger, direkter Coach in der App "Meisterstück". Sie hilft Menschen, ihre Ziele Schritt für Schritt durchzuziehen, ohne sich zu überfordern. Antworte immer auf Deutsch, kurz (max. 6 Sätze), konkret und ermutigend. Schlage eher kleine 15–30-Minuten-Schritte vor.
+Großes Ziel des Nutzers: ${S.vision}
+Aktueller Fokus: ${g?g.title:"keiner"}
+Geplante Schritte: ${g&&g.steps.length?g.steps.map(x=>x.text).join("; "):"keine"}
+Manifest heute: ${(S.man||[]).find(m=>m.d===day())?.t||"–"}
+Letzte Blockaden: ${(S.checks||[]).slice(0,3).map(c=>c.block).filter(Boolean).join("; ")||"–"}`}
+function renderChat(){$("chat").innerHTML=hist.map(m=>`<div class="msg ${m.role==="user"?"me":"ai"}">${esc(m.content)}</div>`).join("")}
+$("askForm").onsubmit=async e=>{e.preventDefault();const q=$("askIn").value.trim();if(!q||!ai)return;$("askIn").value="";
+  hist.push({role:"user",content:q});const a={role:"assistant",content:"Denkt nach …"};hist.push(a);renderChat();
+  const msgs=hist.slice(0,-1).map((m,i)=>i===0?{role:"user",content:ctx()+"\n\nFrage: "+m.content}:m);
+  try{const r=await ai(msgs,{cache:false,onText:({text})=>{a.content=text;renderChat()}});a.content=r.text}
+  catch(err){a.content=err.code==="rate_limited"?"Gerade zu viele Anfragen. Versuch es in ein paar Minuten nochmal.":"Das hat nicht geklappt. Versuch es nochmal."}
+  renderChat()};
+$("aiSplit").onclick=async()=>{const g=goal();if(!g||!ai)return;const b=$("aiSplit");b.disabled=true;b.textContent="Zerlegt …";
+  try{const steps=await ai.json(ctx()+`\n\nZerlege das Fokus-Ziel "${g.title}" in 5 bis 7 aufeinanderfolgende, sehr kleine Schritte, jeder in 15–30 Minuten machbar und konkret formuliert (max. 12 Wörter). Antworte nur mit einem JSON-Array aus Strings.`);
+    const list=(Array.isArray(steps)?steps:[]).filter(x=>typeof x==="string").slice(0,7);
+    $("aiPrev").innerHTML=list.length?`<ul>${list.map((t,i)=>`<li><span class="n">${i+1}</span><span class="t">${esc(t)}</span></li>`).join("")}</ul><div class="row"><button class="mini" id="aiTake">Alle übernehmen</button><button class="link" id="aiNo">Verwerfen</button></div>`:"<div class='empty'>Keine Vorschläge bekommen. Versuch es nochmal.</div>";
+    if(list.length){$("aiTake").onclick=()=>{list.forEach(t=>g.steps.push({id:uid(),text:t}));$("aiPrev").innerHTML="";save()};$("aiNo").onclick=()=>$("aiPrev").innerHTML=""}
+  }catch(err){$("aiPrev").innerHTML="<div class='empty'>Das hat nicht geklappt. Versuch es nochmal.</div>"}
+  b.disabled=false;b.textContent="✨ Mit KI in kleine Schritte zerlegen"};
+function showPlan(i){const P=i.plan,pb=$("planBox");
+  pb.innerHTML=`<div class="bp"><div class="ttl">Bauplan</div><h3>${esc(i.text)}</h3>
+   ${P.ziel?`<div>${esc(P.ziel)}</div>`:""}
+   <div class="first">Erster Schritt heute: ${esc(P.ersterSchritt||"")}</div>
+   ${(P.phasen||[]).map((ph,n)=>`<div><h4>Phase ${n+1}: ${esc(ph.name)}</h4><ol>${(ph.schritte||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ol></div>`).join("")}
+   ${P.werkzeuge?.length?`<div><h4>Was du brauchst</h4><ul class="ul2">${P.werkzeuge.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+   ${P.stolpersteine?.length?`<div><h4>Stolpersteine und wie du sie umgehst</h4><ul class="ul2">${P.stolpersteine.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+   <div class="row"><button class="big" id="bpGo">Zum Fokus machen</button><button class="link" id="bpClose">Schließen</button></div></div>`;
+  $("bpClose").onclick=()=>pb.innerHTML="";
+  $("bpGo").onclick=()=>{const g=goal();const steps=[P.ersterSchritt,...((P.phasen||[])[0]?.schritte||[])].filter(Boolean).map(t=>({id:uid(),text:t}));
+    S.ideas=S.ideas.filter(x=>x!==i);if(g)S.ideas.push({id:uid(),text:g.title,steps:g.steps});
+    const ng={id:uid(),title:i.text,steps,plan:P};S.goals=[ng];S.focus=ng.id;pb.innerHTML="";save();window.scrollTo(0,0)};
+  pb.scrollIntoView({behavior:"smooth",block:"start"})}
+async function makePlan(id){const i=S.ideas.find(x=>x.id===id);if(!i||!ai)return;if(i.plan)return showPlan(i);
+  $("planBox").innerHTML='<div class="bp"><div class="ttl">Bauplan</div><div>Die KI erstellt deinen Bauplan …</div></div>';
+  try{const P=await ai.json(ctx()+`\n\nDer Nutzer will diese Idee umsetzen: "${i.text}". Erstelle einen praxisnahen Bauplan für jemanden, der bei null anfängt und sich schnell überfordert fühlt. Antworte nur mit JSON in dieser Form:
+{"ziel":"ein Satz, was am Ende steht","ersterSchritt":"ein Schritt für heute, max. 15 Minuten","phasen":[{"name":"kurzer Name","schritte":["konkreter Schritt, max. 12 Wörter"]}],"werkzeuge":["Werkzeug, App oder Ressource, möglichst kostenlos"],"stolpersteine":["typisches Problem – und wie man es löst"]}
+3 bis 4 Phasen (z. B. Klären, Testen, Bauen, Zeigen), je 3 bis 5 Schritte. Alles auf Deutsch.`);
+    if(!P||!Array.isArray(P.phasen))throw 0;i.plan=P;save();showPlan(i)}
+  catch(e){$("planBox").innerHTML='<div class="bp"><div>Der Bauplan hat nicht geklappt. Versuch es nochmal.</div></div>'}}
+(async()=>{try{ai=await window.claude?.use?.("sample");if(ai){$("coach").hidden=false;$("aiSplitBox").hidden=false;render()}}catch(e){}})();
+
+render();
+(async()=>{try{
+  db=await window.claude?.use?.("db");const user=await window.claude?.use?.("user");
+  const id=user?await user.id():null;
+  if(!db||!id){db=null;$("save").textContent="Nur auf diesem Gerät gespeichert.";return}
+  ref=db.collection("data/users/"+id).doc("werkbank");
+  const snap=await ref.get();
+  if(snap.exists){S=snap.data();S.ideas=S.ideas||[];S.log=S.log||[];S.goals=S.goals||[];lastXp=null;render();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}$("save").textContent="Gespeichert"}
+  else save();
+}catch(e){db=null;$("save").textContent="Nur auf diesem Gerät gespeichert."}})();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
