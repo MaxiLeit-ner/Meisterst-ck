@@ -187,6 +187,17 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 #ideas li::before{content:"";position:absolute;top:5px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#e53935;box-shadow:0 2px 2px rgba(0,0,0,.3)}
 #ideas li .t{font-weight:600}#ideas li .x{position:absolute;top:2px;right:4px;color:#6b5a4a}
 #ideas li.empty{grid-column:1/-1;background:#fff8d6;transform:none}
+.pg-off{display:none!important}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1.5px solid var(--line);
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));box-shadow:0 -4px 16px rgba(0,0,0,.06)}
+.tabbar button{font:inherit;font-size:.72rem;font-weight:700;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:12px;cursor:pointer;min-height:52px}
+.tabbar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button.on{color:var(--green);background:color-mix(in srgb,var(--green) 12%,transparent)}
+.tabbar button:focus-visible{outline:3px solid var(--ruler);outline-offset:-3px}
+.wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))!important}
+.pgname{display:block;font-size:.75rem;color:var(--muted);font-weight:500}
+.toast{bottom:calc(env(safe-area-inset-bottom,0px) + 86px)!important}
+@media (max-width:440px){h1{font-size:1.7rem}.streak b{font-size:1.7rem}.hr{gap:8px}header{gap:8px}header>div:first-child{min-width:0}}
 .office canvas{display:block;width:100%;height:auto}
 .who{display:flex;gap:8px}.who button{flex:1;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}.who button.on{background:var(--green);color:var(--bg);border-color:var(--green)}
 .scene{position:relative;background:linear-gradient(var(--sky),var(--surface));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
@@ -390,6 +401,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
     <ul id="log"></ul>
   </section>
   <div class="save" id="save"></div>
+  <nav class="tabbar" aria-label="Seiten"><button type="button" data-page="heute"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg><span>Heute</span></button><button type="button" data-page="reich"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V9l7-5 7 5v12"/><path d="M10 21v-6h4v6"/></svg><span>Mein Reich</span></button><button type="button" data-page="ideen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg><span>Ideen</span></button><button type="button" data-page="fortschritt"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg><span>Fortschritt</span></button></nav>
+
   <div class="toast" id="toast" role="status" hidden></div>
   <div class="lvlup" id="lvlup" hidden><div class="lvbox"><div class="ttl">Level up!</div><div class="lvwrap"><canvas id="lvScene" width="800" height="560" style="width:100%;height:auto;border-radius:12px;display:block" aria-hidden="true"></canvas></div><b id="lvNum"></b><div id="lvTxt"></div><button class="big" id="lvOk">Weiter geht's</button></div></div>
   <canvas id="confetti" aria-hidden="true"></canvas>
@@ -482,11 +495,18 @@ $("lvOk").onclick=()=>{$("lvlup").hidden=true;};
 let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
 let lastXp=null;
 const BLOCKS={char:"Level & Büro",shop:"Einrichtung",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Pinnwand",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
+const PAGES=[["heute","Heute"],["reich","Mein Reich"],["ideen","Ideen"],["fortschritt","Fortschritt"]];
+const PAGE_OF={today:"heute",plan:"heute",check:"heute",char:"reich",shop:"reich",ideas:"ideen",coach:"ideen",pics:"ideen",review:"fortschritt",ruler:"fortschritt",rewards:"fortschritt",log:"fortschritt",vision:"fortschritt"};
+let PAGE="heute";try{const h=location.hash.slice(1);if(PAGE_OF&&PAGES.some(p=>p[0]===h))PAGE=h}catch(e){}
+function showPage(pg,scroll){PAGE=pg;document.querySelectorAll("[data-block]").forEach(el=>el.classList.toggle("pg-off",(PAGE_OF[el.dataset.block]||"heute")!==PAGE));
+  document.querySelectorAll("[data-page]").forEach(b=>{const on=b.dataset.page===PAGE;b.classList.toggle("on",on);on?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current")});
+  if(location.hash.slice(1)!==pg){try{history.replaceState(null,"","#"+pg)}catch(e){}}if(scroll)window.scrollTo(0,0)}
+addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(PAGES.some(p=>p[0]===h)&&h!==PAGE)showPage(h,true)});
 function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>all.includes(x.id));all.forEach(id=>{if(!L.find(x=>x.id===id)){const ci=L.findIndex(x=>x.id==="char");if(id==="shop"&&ci>=0)L.splice(ci+1,0,{id,on:true});else L.push({id,on:true})}});S.layout=L;
   const w=document.querySelector(".wrap"),end=$("save");
-  L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}})}
+  L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}});showPage(PAGE)}
 function renderSett(){const L=S.layout;$("swMorning").checked=S.morningOn!==false;
-  $("blocks").innerHTML=L.map((x,i)=>`<li><span class="t">${BLOCKS[x.id]}</span><button class="arr" data-up="${i}" ${i===0?"disabled":""} aria-label="Nach oben">↑</button><button class="arr" data-dn="${i}" ${i===L.length-1?"disabled":""} aria-label="Nach unten">↓</button><label class="sw"><input type="checkbox" data-tog="${i}" ${x.on?"checked":""} aria-label="${BLOCKS[x.id]} anzeigen"><i></i></label></li>`).join("")}
+  $("blocks").innerHTML=L.map((x,i)=>`<li><span class="t">${BLOCKS[x.id]}<small class="pgname">${(PAGES.find(p=>p[0]===PAGE_OF[x.id])||["",""])[1]}</small></span><button class="arr" data-up="${i}" ${i===0?"disabled":""} aria-label="Nach oben">↑</button><button class="arr" data-dn="${i}" ${i===L.length-1?"disabled":""} aria-label="Nach unten">↓</button><label class="sw"><input type="checkbox" data-tog="${i}" ${x.on?"checked":""} aria-label="${BLOCKS[x.id]} anzeigen"><i></i></label></li>`).join("")}
 $("gear").onclick=()=>{layout();renderSett();$("sett").hidden=false;pushState().catch(()=>{})};
 $("settOk").onclick=()=>{$("sett").hidden=true;save();window.scrollTo(0,0)};
 $("swMorning").onchange=e=>{S.morningOn=e.target.checked;try{localStorage.setItem(LS,JSON.stringify(S))}catch(err){}};
@@ -761,6 +781,7 @@ $("logout").onclick=async()=>{await SB.auth.signOut();try{localStorage.removeIte
 // Büro-Animation: läuft nur, wenn etwas davon sichtbar ist
 function nightNow(){const h=new Date().getHours();return h>=19||h<6}
 function setWho(w){S.avatar=w;if(window.Buero)Buero.setWho(w);["W","M"].forEach(k=>{const b=$("who"+k);if(b){const on=(k==="M")===(w==="m");b.classList.toggle("on",on);b.setAttribute("aria-pressed",on)}})}
+document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>showPage(b.dataset.page,true));
 $("whoW").onclick=()=>{setWho("w");save()};$("whoM").onclick=()=>{setWho("m");save()};
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function frame(ms){const t=reduce?1.2:ms/1000;
