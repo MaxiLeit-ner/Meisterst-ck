@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Meisterstück">
 <link rel="manifest" href="manifest.json">
+<script src="buero.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
@@ -169,6 +170,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 .ptimes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end}
 .ptimes label{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}.ptimes input{padding:10px 6px}
 .ptimes button{grid-column:1/-1}
+.office canvas{display:block;width:100%;height:auto}
+.who{display:flex;gap:8px}.who button{flex:1;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}.who button.on{background:var(--green);color:var(--bg);border-color:var(--green)}
 .scene{position:relative;background:linear-gradient(var(--sky),var(--surface));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
 .scene svg{display:block;width:100%;height:auto}
 .part{transform-box:fill-box;transform-origin:50% 100%}
@@ -177,7 +180,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 @keyframes drop{from{transform:translateY(-60px) scale(.9);opacity:0}to{transform:none;opacity:1}}
 @keyframes smoke{0%,100%{transform:translateY(0);opacity:.7}50%{transform:translateY(-6px);opacity:.3}}
 @media (prefers-reduced-motion:reduce){.part.new,.smoke{animation:none}}
-.mbiber{width:170px;height:170px;align-self:center}
+.mbiber{width:170px;height:200px;align-self:center}
 .wave{transform-box:fill-box;transform-origin:20% 90%;animation:wave 1.6s ease-in-out infinite}
 @keyframes wave{0%,60%,100%{transform:rotate(0)}20%{transform:rotate(-18deg)}40%{transform:rotate(10deg)}}
 .zz{animation:smoke 2.4s ease-in-out infinite}
@@ -228,7 +231,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 
 <div class="morning" id="morning" hidden>
   <div class="mwrap">
-    <img class="mbiber bimg" id="mBiber" alt="" width="170" height="170">
+    <canvas class="mbiber" id="mFig" width="340" height="400" aria-hidden="true"></canvas>
     <div class="lbl" id="mLbl">Guten Morgen · bevor es losgeht</div>
     <div class="mvision" id="mVision"></div>
     <label for="manIn" class="mq" id="mQ">Was manifestierst du heute?</label>
@@ -267,6 +270,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   <div class="mwrap">
     <div class="shead"><h2 class="sh">Einstellungen</h2><button class="mini" id="settOk">Fertig</button></div>
     <div class="srow"><div><b>Morgen-Modus</b><small>Jeden Morgen zuerst manifestieren</small></div><label class="sw"><input type="checkbox" id="swMorning"><i></i></label></div>
+    <h2 class="sh2">Deine Figur</h2>
+    <div class="who" role="group" aria-label="Figur wählen"><button type="button" id="whoW">Mia</button><button type="button" id="whoM">Leon</button></div>
     <h2 class="sh2">Erinnerungen</h2>
     <div class="srow"><div><b>Push-Nachrichten</b><small id="pushInfo">Dreimal am Tag an dein Ziel erinnert werden</small></div><label class="sw"><input type="checkbox" id="swPush"><i></i></label></div>
     <div class="ptimes" id="pTimes" hidden>
@@ -335,7 +340,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   </section>
 
   <section data-block="rewards">
-    <div class="sechead"><h2>Meine Belohnungen</h2><img class="mini-b bimg m-thumbs" src="biber/daumen.webp" alt="" width="64" height="64"></div>
+    <div class="sechead"><h2>Meine Belohnungen</h2></div>
     <ul id="rewards"></ul>
     <form class="add rw" id="addRw"><input id="rwIn" placeholder="z. B. Neues Mikrofon kaufen" autocomplete="off"><input id="rwLvl" type="number" min="2" max="99" placeholder="Level" aria-label="Ab Level"><button>Dazu</button></form>
   </section>
@@ -346,7 +351,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   </section>
 
   <section data-block="ideas">
-    <div class="sechead"><h2>Ideen-Parkplatz</h2><img class="mini-b bimg m-think" src="biber/nachdenken.webp" alt="" width="64" height="64"></div>
+    <div class="sechead"><h2>Ideen-Parkplatz</h2></div>
     <form class="add" id="addIdea"><input id="ideaIn" placeholder="Idee raus aus dem Kopf …" autocomplete="off"><button>Parken</button></form>
     <ul id="ideas"></ul>
     <div id="planBox"></div>
@@ -363,11 +368,12 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   </section>
   <div class="save" id="save"></div>
   <div class="toast" id="toast" role="status" hidden></div>
-  <div class="lvlup" id="lvlup" hidden><div class="lvbox"><div class="ttl">Level up!</div><div class="lvwrap"><svg id="lvScene" viewBox="0 0 400 210" style="width:100%;height:auto;border-radius:12px;background:var(--sky);display:block" aria-hidden="true"></svg></div><b id="lvNum"></b><div id="lvTxt"></div><button class="big" id="lvOk">Weiter geht's</button></div></div>
+  <div class="lvlup" id="lvlup" hidden><div class="lvbox"><div class="ttl">Level up!</div><div class="lvwrap"><canvas id="lvScene" width="800" height="560" style="width:100%;height:auto;border-radius:12px;display:block" aria-hidden="true"></canvas></div><b id="lvNum"></b><div id="lvTxt"></div><button class="big" id="lvOk">Weiter geht's</button></div></div>
   <canvas id="confetti" aria-hidden="true"></canvas>
 </div>
 
 <script>
+var OFFICE={stage:1};
 const $=id=>document.getElementById(id);
 const uid=()=>Math.random().toString(36).slice(2,9);
 const day=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -389,7 +395,7 @@ function streak(){const days=new Set(S.log.map(l=>l.d));let n=0,d=new Date();
   while(days.has(day(d))){n++;d.setDate(d.getDate()-1)}return n}
 function esc(s){const e=document.createElement("span");e.textContent=s;return e.innerHTML}
 
-const TITLES=[[1,"Neuling"],[3,"Lehrling"],[6,"Geselle"],[10,"Macher"],[15,"Meister"],[20,"Legende"]];
+const TITLES=[[1,"Starter"],[3,"Macher"],[5,"Gründer"],[10,"Profi"],[15,"Visionär"],[20,"Legende"]];
 const DEF_UNLOCKS=[[3,"Lieblingsessen gönnen"],[5,"Etwas Neues für dein Ziel kaufen"],[10,"Ein freier Tag nur für dich"]];
 function rewards(){if(!S.rewards)S.rewards=DEF_UNLOCKS.map(u=>({id:uid(),lvl:u[0],text:u[1],done:false}));S.rewards.sort((a,b)=>a.lvl-b.lvl);return S.rewards}
 function stats(){const man=(S.man||[]).length,ck=(S.checks||[]).length,st=S.log.length,id=S.ideaCount||S.ideas.length;
@@ -457,82 +463,8 @@ function renderReview(){const now=new Date();now.setHours(0,0,0,0);const a=bound
     <div class="cal ${cls}">${cal}</div><div class="revmsg">${msg}</div>`;
   document.querySelectorAll("[data-per]").forEach(b=>b.classList.toggle("on",b.dataset.per===per))}
 document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{per=b.dataset.per;renderReview()});
-// Werkstück: jeder erledigte Schritt setzt ein Bauteil. Teile in Zeichenreihenfolge, Zahl = Bauschritt.
-const FURN=[
- {name:"Hocker",parts:[
-  [1,"Hintere Beine gesägt",'<rect x="132" y="120" width="8" height="58" fill="#9b6b43"/><rect x="180" y="120" width="8" height="58" fill="#9b6b43"/>'],
-  [2,"Vordere Beine gehobelt",'<rect x="118" y="124" width="11" height="58" fill="#c98f5a"/><rect x="191" y="124" width="11" height="58" fill="#c98f5a"/>'],
-  [3,"Zarge verleimt",'<rect x="116" y="118" width="88" height="10" fill="#9b6b43"/>'],
-  [4,"Sitzfläche aufgesetzt",'<rect x="104" y="104" width="112" height="14" rx="4" fill="#dcae7b"/>'],
-  [5,"Kanten gerundet",'<rect x="104" y="104" width="112" height="4" rx="2" fill="#f0cf9f"/>'],
-  [6,"Geölt und fertig",'<path d="M114 111 q30 -4 60 0 t36 0" stroke="#9b6b43" stroke-width="1.2" fill="none" opacity=".6"/>']]},
- {name:"Bücherregal",parts:[
-  [6,"Rückwand eingesetzt",'<rect x="112" y="44" width="96" height="134" fill="#e9c896"/>'],
-  [1,"Linke Seite zugeschnitten",'<rect x="100" y="40" width="12" height="142" fill="#c98f5a"/>'],
-  [2,"Rechte Seite zugeschnitten",'<rect x="208" y="40" width="12" height="142" fill="#c98f5a"/>'],
-  [3,"Boden gedübelt",'<rect x="112" y="168" width="96" height="12" fill="#9b6b43"/>'],
-  [4,"Deckel aufgesetzt",'<rect x="96" y="34" width="128" height="10" rx="2" fill="#9b6b43"/>'],
-  [5,"Erster Fachboden",'<rect x="112" y="122" width="96" height="7" fill="#9b6b43"/>'],
-  [7,"Zweiter Fachboden",'<rect x="112" y="80" width="96" height="7" fill="#9b6b43"/>'],
-  [8,"Eingeräumt",'<rect x="118" y="56" width="9" height="24" fill="#24493b"/><rect x="128" y="60" width="8" height="20" fill="#b4532a"/><rect x="137" y="54" width="10" height="26" fill="#f2c230"/><rect x="170" y="98" width="10" height="24" fill="#5c8a72"/><rect x="181" y="102" width="9" height="20" fill="#24493b"/><circle cx="160" cy="160" r="8" fill="#b4532a"/>']]},
- {name:"Esstisch",parts:[
-  [1,"Hintere Beine",'<rect x="90" y="108" width="9" height="70" fill="#9b6b43"/><rect x="221" y="108" width="9" height="70" fill="#9b6b43"/>'],
-  [2,"Vordere Beine",'<rect x="74" y="112" width="12" height="70" fill="#c98f5a"/><rect x="234" y="112" width="12" height="70" fill="#c98f5a"/>'],
-  [3,"Zarge mit Schlitz und Zapfen",'<rect x="72" y="100" width="176" height="12" fill="#9b6b43"/>'],
-  [4,"Tischplatte verleimt",'<rect x="56" y="86" width="208" height="16" rx="3" fill="#dcae7b"/>'],
-  [5,"Platte geschliffen",'<path d="M66 92 q50 -4 100 0 t90 0 M70 97 q60 3 120 0 t66 0" stroke="#9b6b43" stroke-width="1.2" fill="none" opacity=".55"/>'],
-  [6,"Kanten gefast",'<rect x="56" y="86" width="208" height="4" rx="2" fill="#f0cf9f"/>'],
-  [7,"Geölt",'<rect x="56" y="86" width="208" height="16" rx="3" fill="#ffffff" opacity=".12"/>'],
-  [8,"Gedeckt und fertig",'<rect x="150" y="66" width="14" height="20" rx="3" fill="#bfe0ee"/><path d="M157 66 v-14" stroke="#3f7a52" stroke-width="2"/><circle cx="157" cy="50" r="6" fill="#f2c230"/>']]},
- {name:"Kleiderschrank",parts:[
-  [5,"Rückwand",'<rect x="100" y="36" width="120" height="132" fill="#e9c896"/>'],
-  [1,"Sockel",'<rect x="96" y="168" width="128" height="12" fill="#7a5233"/>'],
-  [2,"Linke Seite",'<rect x="88" y="30" width="12" height="140" fill="#c98f5a"/>'],
-  [3,"Rechte Seite",'<rect x="220" y="30" width="12" height="140" fill="#c98f5a"/>'],
-  [4,"Kranz oben",'<rect x="82" y="22" width="156" height="12" rx="2" fill="#9b6b43"/>'],
-  [6,"Linke Tür angeschlagen",'<rect x="100" y="36" width="59" height="132" fill="#dcae7b" stroke="#9b6b43" stroke-width="2"/><rect x="108" y="46" width="43" height="112" fill="none" stroke="#9b6b43" stroke-width="1.5" opacity=".6"/>'],
-  [7,"Rechte Tür angeschlagen",'<rect x="161" y="36" width="59" height="132" fill="#dcae7b" stroke="#9b6b43" stroke-width="2"/><rect x="169" y="46" width="43" height="112" fill="none" stroke="#9b6b43" stroke-width="1.5" opacity=".6"/>'],
-  [8,"Griffe montiert",'<rect x="150" y="92" width="4" height="22" rx="2" fill="#24493b"/><rect x="166" y="92" width="4" height="22" rx="2" fill="#24493b"/>'],
-  [9,"Meisterstück fertig",'<rect x="82" y="22" width="156" height="3" fill="#f2c230"/><circle cx="160" cy="14" r="4" fill="#f2c230"/>']]}];
-// Biber-Maskottchen: Stimmung (wave, work, party, sleep) und Rang nach Level
-function biber(mood,L){const rank=L>=15?"m":L>=6?"g":"l";
-  const eyes=mood==="party"||(mood==="wave"&&rank==="m")?'<path d="M80 79 q6 -8 12 0 M108 79 q6 -8 12 0" stroke="#1d1a16" stroke-width="3.5" fill="none" stroke-linecap="round"/>'
-   :mood==="sleep"?'<path d="M80 80 q6 5 12 0 M108 80 q6 5 12 0" stroke="#1d1a16" stroke-width="3" fill="none" stroke-linecap="round"/>'
-   :mood==="work"?'<path d="M80 72 l12 4 M120 72 l-12 4" stroke="#2b1b10" stroke-width="3" stroke-linecap="round"/><circle cx="87" cy="81" r="4.5" fill="#1d1a16"/><circle cx="113" cy="81" r="4.5" fill="#1d1a16"/>'
-   :'<circle cx="86" cy="79" r="5" fill="#1d1a16"/><circle cx="114" cy="79" r="5" fill="#1d1a16"/><circle cx="87.6" cy="77.4" r="1.6" fill="#fff"/><circle cx="115.6" cy="77.4" r="1.6" fill="#fff"/>';
-  const mouth=mood==="party"?'<path d="M88 96 q12 18 24 0z" fill="#5a2a1a"/><rect x="94" y="96" width="12" height="7" rx="1.5" fill="#fbfaf6"/>'
-   :'<path d="M90 98 q10 7 20 0" stroke="#2b1b10" stroke-width="2.5" fill="none" stroke-linecap="round"/><rect x="94" y="100" width="12" height="9" rx="2" fill="#fbfaf6" stroke="#d7d2c4"/>';
-  const arms=mood==="party"?'<ellipse cx="56" cy="102" rx="9" ry="18" fill="#6e4528" transform="rotate(-25 56 102)"/><ellipse cx="144" cy="102" rx="9" ry="18" fill="#6e4528" transform="rotate(25 144 102)"/>'
-   :mood==="wave"?'<ellipse cx="60" cy="140" rx="9" ry="16" fill="#6e4528"/><g class="wave"><ellipse cx="146" cy="104" rx="9" ry="18" fill="#6e4528" transform="rotate(25 146 104)"/></g>'
-   :mood==="work"?'<rect x="58" y="128" width="40" height="14" rx="3" fill="#9b6b43" transform="rotate(-8 78 135)"/><rect x="70" y="120" width="12" height="10" rx="3" fill="#24493b"/><ellipse cx="64" cy="138" rx="8" ry="7" fill="#6e4528"/><ellipse cx="104" cy="136" rx="8" ry="7" fill="#6e4528"/>'
-   :'<ellipse cx="72" cy="146" rx="9" ry="14" fill="#6e4528" transform="rotate(30 72 146)"/><ellipse cx="128" cy="146" rx="9" ry="14" fill="#6e4528" transform="rotate(-30 128 146)"/>';
-  const hat=mood==="sleep"?'<path d="M66 54 q34 -30 70 0 l4 10 q-38 -16 -78 0z" fill="#24493b"/><circle cx="140" cy="64" r="6" fill="#f2c230"/>'
-   :rank==="l"?'<rect x="124" y="36" width="6" height="34" rx="1" fill="#f2c230" transform="rotate(35 127 53)"/>'
-   :rank==="g"?'<path d="M63 64 q37 -42 74 0z" fill="#f2c230"/><rect x="58" y="60" width="84" height="8" rx="4" fill="#d9a915"/>'
-   :'<path d="M63 64 q37 -42 74 0z" fill="#24493b"/><rect x="58" y="60" width="84" height="8" rx="4" fill="#163128"/><circle cx="100" cy="48" r="5" fill="#f2c230"/>';
-  const extra=(rank==="g"&&mood!=="sleep"?'<rect x="58" y="160" width="84" height="9" rx="3" fill="#24493b"/><rect x="68" y="164" width="14" height="14" rx="2" fill="#2e5d3d"/>':"")
-   +(rank==="m"&&mood!=="work"?'<circle cx="100" cy="134" r="11" fill="#f2c230" stroke="#b88a00" stroke-width="2.5"/>':"")
-   +(mood==="sleep"?'<text x="140" y="50" font-size="22" font-weight="700" fill="#5f6b65" class="zz">z</text>':"");
-  return '<path d="M128 160 q50 8 56 -16 q3 -12 -12 -12 q-26 2 -44 18z" fill="#5a3a22"/><ellipse cx="100" cy="142" rx="44" ry="42" fill="#8a5a36"/><ellipse cx="100" cy="150" rx="27" ry="27" fill="#c79a6b"/>'
-   +'<circle cx="70" cy="56" r="10" fill="#8a5a36"/><circle cx="130" cy="56" r="10" fill="#8a5a36"/><circle cx="100" cy="84" r="36" fill="#8a5a36"/>'+hat
-   +'<ellipse cx="100" cy="96" rx="19" ry="14" fill="#c79a6b"/>'+eyes+'<ellipse cx="100" cy="90" rx="6" ry="4.5" fill="#2b1b10"/>'+mouth
-   +'<ellipse cx="80" cy="182" rx="13" ry="7" fill="#6e4528"/><ellipse cx="120" cy="182" rx="13" ry="7" fill="#6e4528"/>'+extra+arms}
-const BIMG={wave:"winken",work:"arbeiten",party:"jubeln",sleep:"schlafen",think:"nachdenken",thumbs:"daumen",cheer:"aufmuntern"};
-const bsrc=m=>"biber/"+BIMG[m]+".webp";
-function missedDay(){const d=new Date();d.setDate(d.getDate()-1);const y=day(d),t=day();return S.log.length>0&&!S.log.some(l=>l.d===y||l.d===t)}
-function biberMood(){const t=day();if(!(S.man||[]).some(m=>m.d===t)&&!S.log.some(l=>l.d===t)&&missedDay())return "cheer";if((S.checks||[]).some(c=>c.d===t))return "sleep";if(S.log.some(l=>l.d===t))return "party";if((S.man||[]).some(m=>m.d===t))return "work";return "wave"}
-let lastBuilt=null;
-function renderBuild(C){const fi=(C.L-1)%FURN.length,F=FURN[fi],n=F.parts.length,count=Math.min(n-1,Math.floor(C.rest/C.need*n));
-  const key=C.L+":"+count,first=lastBuilt===null,anim=lastBuilt!==key;
-  const last=F.parts.find(p=>p[0]===count);
-  $("scene").innerHTML='<rect x="0" y="180" width="400" height="30" fill="#b98a5e"/><path d="M0 180 h400 M0 195 h400" stroke="#9b6b43" stroke-width="1.5"/>'+
-    F.parts.filter(p=>p[0]<=count).map(p=>`<g class="part ${anim&&(first||p[0]===count)?"new":""}" style="animation-delay:${first?(p[0]-1)*0.15:0}s">${p[2]}</g>`).join("")+
-    F.parts.filter(p=>p[0]===count+1).map(p=>`<g opacity=".18">${p[2]}</g>`).join("")+
-    `<image class="bimg m-${biberMood()}" href="${bsrc(biberMood())}" x="290" y="62" width="118" height="118"/>`+(!count?`<text x="160" y="60" text-anchor="middle" font-size="12" fill="#5f6b65">Sammle XP, dann entsteht dein ${F.name}</text>`:"");
-  $("buildCap").innerHTML=`<b>${F.name}</b>${count?" · "+esc(last[1]):""}`;
-  $("buildNum").textContent=`Bauteil ${count} von ${n}`;
-  lastBuilt=key}
 function render(){
+  if(window.Buero&&S.avatar!==undefined)Buero.setWho(S.avatar);
   layout();
   $("date").textContent=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
   $("streak").textContent=streak();
@@ -540,7 +472,6 @@ function render(){
   const todayMan=S.man.find(m=>m.d===day());
   const onb=!S.vision;
   $("morning").hidden=!(onb||(S.morningOn!==false && !todayMan));
-  {const mm=onb||!missedDay()?"wave":"cheer";$("mBiber").src=bsrc(mm);$("mBiber").className="mbiber bimg m-"+mm}
   if(onb){$("mLbl").textContent="Willkommen bei Meisterstück";$("mVision").textContent="Was willst du in deinem Leben erreichen?";
     $("mQ").textContent="Schreib dein großes Ziel auf. Du kannst es jederzeit ändern.";$("manIn").placeholder="z. B. Eigene Firma gründen, 10 kg abnehmen, ein Haus bauen";$("manOk").textContent="Los geht's";$("mCount").textContent="";}
   else if(!$("morning").hidden){$("mLbl").textContent="Guten Morgen · bevor es losgeht";$("mQ").textContent="Was manifestierst du heute?";$("manIn").placeholder="z. B. Ich ziehe heute meinen Schritt durch.";$("manOk").textContent="Festhalten";$("mVision").textContent=S.vision;
@@ -570,15 +501,15 @@ function render(){
   // Charakter
   const C=stats(),title=TITLES.filter(t=>t[0]<=C.L).pop()[1],RW=rewards(),nx=RW.find(u=>u.lvl>C.L),ready=RW.filter(u=>u.lvl<=C.L&&!u.done);
   $("char").innerHTML=`<div class="chead"><div><div class="ttl">${title}</div><div class="lvl">Level ${C.L}</div></div><div class="xpcap">${C.xp} XP gesamt</div></div>
-   <div class="scene"><svg id="scene" viewBox="0 0 400 210" role="img" aria-label="Möbelstück, das mit deinen XP entsteht, daneben der Biber"></svg></div>
+   <div class="scene office"><canvas id="office" width="1200" height="840" role="img" aria-label="Dein Büro, deine Figur läuft darin herum"></canvas></div>
    <div class="rcap"><span id="buildCap"></span><span id="buildNum"></span></div>
    <div><div class="xpbar"><i style="width:${C.rest/C.need*100}%"></i></div><div class="xpcap">${C.rest} / ${C.need} XP bis Level ${C.L+1}</div></div>
    <div class="stats"><div class="stat">Disziplin<b>${C.st}</b></div><div class="stat">Klarheit<b>${C.man}</b></div><div class="stat">Reflexion<b>${C.ck}</b></div><div class="stat">Kreativität<b>${C.id}</b></div></div>
    <div class="unl">${ready.length?"Verdient und bereit: <b>"+ready.map(u=>esc(u.text)).join(", ")+"</b><br>":""}${nx?`Nächste Belohnung bei Level ${nx.lvl}: <b>${esc(nx.text)}</b>`:"Leg dir unten die nächste Belohnung fest."}</div>`;
-  renderBuild(C);
+  {const st=window.Buero?Buero.stageFor(C.L):1,nxt=st===1?5:st===2?15:null;OFFICE.stage=st;$("buildCap").innerHTML=`<b>${Buero?Buero.names[st]:""}</b>`;$("buildNum").textContent=nxt?`Nächste Ausbaustufe ab Level ${nxt}`:"Höchste Ausbaustufe erreicht";}
   if(lastXp!==null&&C.xp>lastXp){const pL=S.lvl||1;
-    if(C.L>pL){const u=RW.filter(x=>x.lvl>pL&&x.lvl<=C.L);const Fd=FURN[(C.L-2)%FURN.length];$("lvScene").innerHTML='<rect x="0" y="180" width="400" height="30" fill="#b98a5e"/>'+Fd.parts.map(p=>`<g class="part new" style="animation-delay:${p[0]*0.08}s">${p[2]}</g>`).join("")+`<image class="bimg m-party" href="${bsrc("party")}" x="286" y="56" width="124" height="124"/>`;
-      levelUp(C.L,`${Fd.name} fertig gebaut! Du bist jetzt ${title}.${u.length?" Belohnung verdient: "+u.map(x=>x.text).join(", ")+". Gönn sie dir!":""}`)}else toast(`+${C.xp-lastXp} XP`)}
+    if(C.L>pL){const u=RW.filter(x=>x.lvl>pL&&x.lvl<=C.L);const ns=window.Buero?Buero.stageFor(C.L):1,os=window.Buero?Buero.stageFor(pL):1;
+      levelUp(C.L,`${ns>os?"Neue Ausbaustufe: "+Buero.names[ns]+"! ":""}Du bist jetzt ${title}.${u.length?" Belohnung verdient: "+u.map(x=>x.text).join(", ")+". Gönn sie dir!":""}`)}else toast(`+${C.xp-lastXp} XP`)}
   S.lvl=C.L;lastXp=C.xp;
   $("rewards").innerHTML=RW.length?RW.map(r=>{const ok=r.lvl<=C.L;return `<li class="${r.done?"rdone":ok?"":"rlocked"}"><span class="rlv">Lvl ${r.lvl}</span><span class="t">${esc(r.text)}</span>${r.done?'<span class="tag">Eingelöst</span>':ok?`<button class="mini" data-redeem="${r.id}">Einlösen</button>`:'<span class="tag">Gesperrt</span>'}<button class="x" data-rdel="${r.id}" aria-label="Belohnung löschen">×</button></li>`}).join(""):`<li class="empty">Was gönnst du dir, wenn du ein Level erreichst?</li>`;
   // Bilder
@@ -756,31 +687,19 @@ $("logout").onclick=async()=>{await SB.auth.signOut();try{localStorage.removeIte
   if(data.session)return startCloud(data.session.user);
   let local=false;try{local=localStorage.getItem("ms-local")==="1"}catch(e){}
   if(local){$("save").textContent="Nur auf diesem Gerät gespeichert.";$("acctLogin").hidden=false}else $("authBox").hidden=false})();
-// Überraschungen: nach einer Weile ohne Aktion macht der Biber etwas Witziges
-const GAGS=[
- {img:"nagen",say:["Mmh, Eiche. Meine Lieblingssorte!","Kurze Snackpause. Bauen macht hungrig.","Knusper, knusper …"],chips:true,dur:5000},
- {img:"gaehnen",say:["*Gääähn* … sag Bescheid, wenn's weitergeht.","*Streeeck* … so, wieder wach!","Puh, ich brauch gleich einen Kaffee."],dur:4500,anim:"m-gag-stretch"},
- {img:"klatschen",say:["*Platsch!* So rufen Biber ihre Freunde.","Schwanzklatscher! Hast du's gehört?","*Klatsch!* Aufwachen, es gibt was zu bauen!"],dur:4000,anim:"m-gag-slap",shake:true},
- {img:"jonglieren",say:["Hammer, Säge, Hobel … guck mal!","Ich übe für den Feierabend.","Nicht nachmachen. Ich bin Profi!"],dur:4500,anim:"m-gag-juggle"},
- {img:"nachdenken",say:["Ich hab da eine Idee: Wie wär's mit deinem nächsten Schritt?","Kleiner Tipp: 15 Minuten reichen für heute.","Was wäre der kleinste Schritt, den du jetzt machen kannst?"],dur:5000,calm:true},
- {img:"daumen",say:["Ich glaub an dich!","Du bist weiter, als du denkst.","Jeder Meister hat mal klein angefangen."],dur:3500,calm:true},
- {img:"schlafen",say:["Zzz … *schnarch* … Bretter … Zzz"],dur:4000,calm:true}];
-const HAVE={};GAGS.forEach(g=>{const i=new Image();i.onload=()=>HAVE[g.img]=true;i.src="biber/"+g.img+".webp"});
-let idleT=null,gagOn=false;
-function resetIdle(){clearTimeout(idleT);if(gagOn)return;idleT=setTimeout(runGag,25000)}
-["pointerdown","keydown","scroll"].forEach(ev=>addEventListener(ev,resetIdle,{passive:true}));
-function runGag(){const img=document.querySelector("#scene .bimg"),box=document.querySelector(".scene");
-  if(!img||!box||document.hidden||!$("morning").hidden||!$("lvlup").hidden||box.getBoundingClientRect().bottom<0){resetIdle();return}
-  const pool=GAGS.filter(g=>HAVE[g.img]);if(!pool.length){resetIdle();return}
-  const g=pool[Math.random()*pool.length|0],old={href:img.getAttribute("href"),cls:img.getAttribute("class")};gagOn=true;
-  img.setAttribute("href","biber/"+g.img+".webp");img.setAttribute("class","bimg "+(g.anim||(g.calm?"m-gag-calm":"m-gag")));
-  const b=document.createElement("div");b.className="bubble";b.textContent=g.say[Math.random()*g.say.length|0];box.appendChild(b);
-  if(g.shake&&!calm){box.classList.remove("shake");void box.offsetWidth;setTimeout(()=>box.classList.add("shake"),700);setTimeout(()=>box.classList.remove("shake"),1400);setTimeout(()=>{box.classList.add("shake")},1900);setTimeout(()=>box.classList.remove("shake"),2600)}
-  let chipT=null;if(g.chips&&!calm){const svg=$("scene");chipT=setInterval(()=>{for(let k=0;k<3;k++){const r=document.createElementNS("http://www.w3.org/2000/svg","rect");
-    r.setAttribute("x",320+Math.random()*24);r.setAttribute("y",95+Math.random()*20);r.setAttribute("width",4+Math.random()*4);r.setAttribute("height",2+Math.random()*2);r.setAttribute("fill",["#e2b77c","#c99a5c","#f0cf9f"][k]);r.setAttribute("class","chip");
-    r.style.setProperty("--dx",(Math.random()*-60-10)+"px");r.style.setProperty("--dy",(Math.random()*-40+10)+"px");r.style.setProperty("--rot",(Math.random()*360)+"deg");r.style.transformBox="fill-box";svg.appendChild(r);setTimeout(()=>r.remove(),950)}},180)}
-  setTimeout(()=>{clearInterval(chipT);b.remove();if(img.isConnected){img.setAttribute("href",old.href);img.setAttribute("class",old.cls)}gagOn=false;idleT=setTimeout(runGag,45000)},g.dur)}
-resetIdle();
+// Büro-Animation: läuft nur, wenn etwas davon sichtbar ist
+function nightNow(){const h=new Date().getHours();return h>=19||h<6}
+function setWho(w){S.avatar=w;if(window.Buero)Buero.setWho(w);["W","M"].forEach(k=>{const b=$("who"+k);if(b){const on=(k==="M")===(w==="m");b.classList.toggle("on",on);b.setAttribute("aria-pressed",on)}})}
+$("whoW").onclick=()=>{setWho("w");save()};$("whoM").onclick=()=>{setWho("m");save()};
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function frame(ms){const t=reduce?1.2:ms/1000;
+  if(window.Buero){
+    const oc=$("office");if(oc&&oc.isConnected&&oc.offsetParent){const r=oc.getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight)Buero.room(oc.getContext("2d"),600,420,OFFICE.stage,t,OFFICE.stage>=3||nightNow())}
+    if(!$("morning").hidden)Buero.figure($("mFig").getContext("2d"),170,200,"wave",t);
+    if(!$("lvlup").hidden){const lc=$("lvScene").getContext("2d");Buero.room(lc,400,280,OFFICE.stage,t,OFFICE.stage>=3);const k=lc.canvas.width/400;lc.save();lc.scale(k,k);lc.globalAlpha=1;lc.restore();}
+  }
+  if(!reduce)requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
