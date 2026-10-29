@@ -203,6 +203,10 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 @keyframes b-chew{0%,100%{transform:rotate(0) translateX(0)}25%{transform:rotate(-1.5deg) translateX(-1px)}75%{transform:rotate(1.5deg) translateX(1px)}}
 .m-gag-stretch{animation:b-in .35s cubic-bezier(.2,1.6,.4,1) both,b-stretch 3.6s ease-in-out .35s 1 both}
 @keyframes b-stretch{0%{transform:none}35%{transform:scale(.96,1.08)}60%{transform:scale(.96,1.09)}75%{transform:scale(1.06,.92)}85%,100%{transform:scale(1,1)}}
+.m-gag-slap{animation:b-in .35s cubic-bezier(.2,1.6,.4,1) both,b-slap 1.2s ease-in-out .35s infinite}
+@keyframes b-slap{0%,100%{transform:none}25%{transform:translateY(-8%) scale(.97,1.04)}35%{transform:translateY(0) scale(1.08,.9)}45%{transform:scale(.98,1.02)}55%{transform:none}}
+.scene.shake{animation:shake .35s linear}
+@keyframes shake{0%,100%{transform:none}20%{transform:translate(-3px,1px)}40%{transform:translate(3px,-1px)}60%{transform:translate(-2px,1px)}80%{transform:translate(2px,0)}}
 .chip{animation:chip .9s ease-out forwards}
 @keyframes chip{from{transform:translate(0,0) rotate(0);opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
 .save{font-size:.8rem;color:var(--muted);text-align:center}
@@ -754,7 +758,7 @@ $("logout").onclick=async()=>{await SB.auth.signOut();try{localStorage.removeIte
 const GAGS=[
  {img:"nagen",say:["Mmh, Eiche. Meine Lieblingssorte!","Kurze Snackpause. Bauen macht hungrig.","Knusper, knusper …"],chips:true,dur:5000},
  {img:"gaehnen",say:["*Gääähn* … sag Bescheid, wenn's weitergeht.","*Streeeck* … so, wieder wach!","Puh, ich brauch gleich einen Kaffee."],dur:4500,anim:"m-gag-stretch"},
- {img:"klatschen",say:["*Platsch!* So rufen Biber ihre Freunde.","Schwanzklatscher! Hast du's gehört?"],dur:4000},
+ {img:"klatschen",say:["*Platsch!* So rufen Biber ihre Freunde.","Schwanzklatscher! Hast du's gehört?","*Klatsch!* Aufwachen, es gibt was zu bauen!"],dur:4000,anim:"m-gag-slap",shake:true},
  {img:"jonglieren",say:["Hammer, Säge, Hobel … guck mal!","Ich übe für den Feierabend."],dur:4500},
  {img:"nachdenken",say:["Ich hab da eine Idee: Wie wär's mit deinem nächsten Schritt?","Kleiner Tipp: 15 Minuten reichen für heute.","Was wäre der kleinste Schritt, den du jetzt machen kannst?"],dur:5000,calm:true},
  {img:"daumen",say:["Ich glaub an dich!","Du bist weiter, als du denkst.","Jeder Meister hat mal klein angefangen."],dur:3500,calm:true},
@@ -769,6 +773,7 @@ function runGag(){const img=document.querySelector("#scene .bimg"),box=document.
   const g=pool[Math.random()*pool.length|0],old={href:img.getAttribute("href"),cls:img.getAttribute("class")};gagOn=true;
   img.setAttribute("href","biber/"+g.img+".webp");img.setAttribute("class","bimg "+(g.anim||(g.calm?"m-gag-calm":"m-gag")));
   const b=document.createElement("div");b.className="bubble";b.textContent=g.say[Math.random()*g.say.length|0];box.appendChild(b);
+  if(g.shake&&!calm){box.classList.remove("shake");void box.offsetWidth;setTimeout(()=>box.classList.add("shake"),700);setTimeout(()=>box.classList.remove("shake"),1400);setTimeout(()=>{box.classList.add("shake")},1900);setTimeout(()=>box.classList.remove("shake"),2600)}
   let chipT=null;if(g.chips&&!calm){const svg=$("scene");chipT=setInterval(()=>{for(let k=0;k<3;k++){const r=document.createElementNS("http://www.w3.org/2000/svg","rect");
     r.setAttribute("x",320+Math.random()*24);r.setAttribute("y",95+Math.random()*20);r.setAttribute("width",4+Math.random()*4);r.setAttribute("height",2+Math.random()*2);r.setAttribute("fill",["#e2b77c","#c99a5c","#f0cf9f"][k]);r.setAttribute("class","chip");
     r.style.setProperty("--dx",(Math.random()*-60-10)+"px");r.style.setProperty("--dy",(Math.random()*-40+10)+"px");r.style.setProperty("--rot",(Math.random()*360)+"deg");r.style.transformBox="fill-box";svg.appendChild(r);setTimeout(()=>r.remove(),950)}},180)}
