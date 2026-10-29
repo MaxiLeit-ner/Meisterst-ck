@@ -170,6 +170,13 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 .ptimes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end}
 .ptimes label{font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}.ptimes input{padding:10px 6px}
 .ptimes button{grid-column:1/-1}
+.coin{display:inline-block;width:.9em;height:.9em;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe680,#f2c230 55%,#c98e0a);vertical-align:-.1em;margin-right:6px}
+.coins{font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:10px}
+.shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:10px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.item .it{min-width:0}.item b{display:block}.item small{color:var(--muted);display:block;line-height:1.3}
+.item.own{border-color:var(--green)}.item.lock{opacity:.6}
+.item .tag{white-space:nowrap}.buy{white-space:nowrap;font-variant-numeric:tabular-nums}.buy:disabled{opacity:.45;cursor:not-allowed}
 .office canvas{display:block;width:100%;height:auto}
 .who{display:flex;gap:8px}.who button{flex:1;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}.who button.on{background:var(--green);color:var(--bg);border-color:var(--green)}
 .scene{position:relative;background:linear-gradient(var(--sky),var(--surface));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
@@ -296,6 +303,11 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 
   <section data-block="char" class="char" id="char"></section>
 
+  <section data-block="shop" id="shopSec">
+    <div class="sechead"><h2>Einrichtung</h2><span class="coins" id="shopCoins"></span></div>
+    <div class="shop" id="shop"></div>
+  </section>
+
   <section data-block="today" class="today" id="today" aria-live="polite"></section>
 
   <section data-block="ruler">
@@ -398,6 +410,32 @@ function esc(s){const e=document.createElement("span");e.textContent=s;return e.
 const TITLES=[[1,"Starter"],[3,"Macher"],[5,"Gründer"],[10,"Profi"],[15,"Visionär"],[20,"Legende"]];
 const DEF_UNLOCKS=[[3,"Lieblingsessen gönnen"],[5,"Etwas Neues für dein Ziel kaufen"],[10,"Ein freier Tag nur für dich"]];
 function rewards(){if(!S.rewards)S.rewards=DEF_UNLOCKS.map(u=>({id:uid(),lvl:u[0],text:u[1],done:false}));S.rewards.sort((a,b)=>a.lvl-b.lvl);return S.rewards}
+const SHOP=[
+ {id:"pflanze",name:"Zimmerpflanze",price:60,stage:1,desc:"Erstes Grün im Raum"},
+ {id:"teppich",name:"Teppich",price:90,stage:1,desc:"Macht den Raum gemütlich"},
+ {id:"regal",name:"Bücherregal",price:180,stage:1,desc:"Endlich ausgepackt: die Kiste verschwindet"},
+ {id:"lampe",name:"Stehlampe",price:140,stage:1,desc:"Warmes Licht für lange Abende"},
+ {id:"monitor",name:"Zweiter Bildschirm",price:260,stage:1,desc:"Mehr Platz für große Pläne"},
+ {id:"pflanze2",name:"Große Pflanze",price:120,stage:1,desc:"Für die gemütliche Ecke"},
+ {id:"sofa",name:"Sofa mit Couchtisch",price:450,stage:2,desc:"Pausen gehören zum Erfolg"},
+ {id:"tv",name:"Bildschirm-Wand",price:520,stage:2,desc:"Für Präsentationen und Filmabende"},
+ {id:"kaffee",name:"Kaffeebar",price:380,stage:3,desc:"Oben auf der Galerie"},
+ {id:"lounge",name:"Lounge-Sofa",price:700,stage:3,desc:"Mit Blick über die Stadt"},
+ {id:"pflanze3",name:"Galerie-Pflanze",price:200,stage:3,desc:"Grün für die zweite Etage"},
+ {id:"lampe2",name:"Designer-Lampe",price:420,stage:3,desc:"Das Licht auf der Galerie"},
+ {id:"trophaee",name:"Trophäe",price:900,stage:3,desc:"Für alles, was du erreicht hast"}];
+const STAGE_LVL={1:1,2:5,3:15};
+function coins(){return Math.max(0,stats().xp-(S.spent||0))}
+let POPBUY=null;
+function renderShop(){const st=window.Buero?Buero.stageFor(stats().L):1,c=coins();S.owned=S.owned||[];
+  $("shopCoins").innerHTML=`<i class="coin" aria-hidden="true"></i>${c.toLocaleString("de-DE")} Münzen`;
+  $("shop").innerHTML=SHOP.map(it=>{const own=S.owned.includes(it.id),lock=it.stage>st,poor=c<it.price;
+    const act=own?'<span class="tag">Im Büro</span>':lock?`<span class="tag">ab Level ${STAGE_LVL[it.stage]}</span>`:`<button class="mini buy" data-buy="${it.id}" ${poor?"disabled":""}>${it.price} Münzen</button>`;
+    return `<div class="item ${own?"own":""} ${lock?"lock":""}"><div class="it"><b>${esc(it.name)}</b><small>${esc(it.desc)}</small></div>${act}</div>`}).join("")}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-buy]");if(!b)return;const it=SHOP.find(x=>x.id===b.dataset.buy);if(!it)return;
+  S.owned=S.owned||[];if(S.owned.includes(it.id)||coins()<it.price)return;
+  S.spent=(S.spent||0)+it.price;S.owned.push(it.id);POPBUY={id:it.id,at:performance.now()};
+  toast(`${it.name} gekauft! −${it.price} Münzen`);save();const oc=$("office");if(oc)oc.scrollIntoView({behavior:"smooth",block:"center"})});
 function stats(){const man=(S.man||[]).length,ck=(S.checks||[]).length,st=S.log.length,id=S.ideaCount||S.ideas.length;
   const days=new Set(S.log.map(l=>l.d)),perfect=(S.man||[]).filter(m=>days.has(m.d)).length;
   const wins=(S.pics||[]).filter(p=>p.kind==="win").length;const xp=st*20+man*10+ck*15+id*5+perfect*10+wins*50;let L=1,rest=xp;while(rest>=L*100){rest-=L*100;L++}
@@ -412,8 +450,8 @@ function levelUp(L,txt){$("lvNum").textContent=L;$("lvTxt").textContent=txt;$("l
 $("lvOk").onclick=()=>{$("lvlup").hidden=true;};
 let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
 let lastXp=null;
-const BLOCKS={char:"Level & Charakter",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
-function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>all.includes(x.id));all.forEach(id=>{if(!L.find(x=>x.id===id))L.push({id,on:true})});S.layout=L;
+const BLOCKS={char:"Level & Büro",shop:"Einrichtung",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
+function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>all.includes(x.id));all.forEach(id=>{if(!L.find(x=>x.id===id)){const ci=L.findIndex(x=>x.id==="char");if(id==="shop"&&ci>=0)L.splice(ci+1,0,{id,on:true});else L.push({id,on:true})}});S.layout=L;
   const w=document.querySelector(".wrap"),end=$("save");
   L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}})}
 function renderSett(){const L=S.layout;$("swMorning").checked=S.morningOn!==false;
@@ -464,6 +502,7 @@ function renderReview(){const now=new Date();now.setHours(0,0,0,0);const a=bound
   document.querySelectorAll("[data-per]").forEach(b=>b.classList.toggle("on",b.dataset.per===per))}
 document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{per=b.dataset.per;renderReview()});
 function render(){
+  try{renderShop()}catch(e){}
   if(window.Buero&&S.avatar!==undefined)Buero.setWho(S.avatar);
   layout();
   $("date").textContent=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
@@ -500,7 +539,7 @@ function render(){
   if(todayMan){const m=document.createElement("div");m.className="mantra";m.textContent="„"+todayMan.t+"“";T.prepend(m)}
   // Charakter
   const C=stats(),title=TITLES.filter(t=>t[0]<=C.L).pop()[1],RW=rewards(),nx=RW.find(u=>u.lvl>C.L),ready=RW.filter(u=>u.lvl<=C.L&&!u.done);
-  $("char").innerHTML=`<div class="chead"><div><div class="ttl">${title}</div><div class="lvl">Level ${C.L}</div></div><div class="xpcap">${C.xp} XP gesamt</div></div>
+  $("char").innerHTML=`<div class="chead"><div><div class="ttl">${title}</div><div class="lvl">Level ${C.L}</div></div><div class="xpcap"><i class="coin" aria-hidden="true"></i>${coins().toLocaleString("de-DE")} Münzen</div></div>
    <div class="scene office"><canvas id="office" width="1200" height="840" role="img" aria-label="Dein Büro, deine Figur läuft darin herum"></canvas></div>
    <div class="rcap"><span id="buildCap"></span><span id="buildNum"></span></div>
    <div><div class="xpbar"><i style="width:${C.rest/C.need*100}%"></i></div><div class="xpcap">${C.rest} / ${C.need} XP bis Level ${C.L+1}</div></div>
@@ -694,9 +733,9 @@ $("whoW").onclick=()=>{setWho("w");save()};$("whoM").onclick=()=>{setWho("m");sa
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function frame(ms){const t=reduce?1.2:ms/1000;
   if(window.Buero){
-    const oc=$("office");if(oc&&oc.isConnected&&oc.offsetParent){const r=oc.getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight)Buero.room(oc.getContext("2d"),600,420,OFFICE.stage,t,OFFICE.stage>=3||nightNow())}
+    const oc=$("office");if(oc&&oc.isConnected&&oc.offsetParent){const r=oc.getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight)Buero.room(oc.getContext("2d"),600,420,OFFICE.stage,t,OFFICE.stage>=3||nightNow(),S.owned,POPBUY)}
     if(!$("morning").hidden)Buero.figure($("mFig").getContext("2d"),170,200,"wave",t);
-    if(!$("lvlup").hidden){const lc=$("lvScene").getContext("2d");Buero.room(lc,400,280,OFFICE.stage,t,OFFICE.stage>=3);const k=lc.canvas.width/400;lc.save();lc.scale(k,k);lc.globalAlpha=1;lc.restore();}
+    if(!$("lvlup").hidden){const lc=$("lvScene").getContext("2d");Buero.room(lc,400,280,OFFICE.stage,t,OFFICE.stage>=3,S.owned);const k=lc.canvas.width/400;lc.save();lc.scale(k,k);lc.globalAlpha=1;lc.restore();}
   }
   if(!reduce)requestAnimationFrame(frame)}
 requestAnimationFrame(frame);

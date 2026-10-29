@@ -189,38 +189,43 @@
     return WH;
   }
 
+  let OWN = new Set(), POP = null;
+  const ANCHOR = { teppich: [4, 3.5, 16], monitor: [1.6, 0.8, 60], regal: [4, 0.4, 70], pflanze: [5.5, 0.6, 40], tv: [5.4, 0.2, 80], sofa: [3.9, 4, 40], lampe: [5.55, 3.05, 90], pflanze2: [0.6, 4.5, 40],
+    lounge: [1.8, 1.4, 170], pflanze3: [3.6, 0.6, 175], trophaee: [4.35, 0.75, 170], kaffee: [3.05, 0.55, 165], lampe2: [0.35, 1.65, 220] };
   function sceneBody(x, stage, t, night) {
     x.save();
     const WH = room(x, stage, night);
-    const z = 16;
-    if (stage === 1) {
-      rug(x, 1.6, 1.6, 2.6, 2.0, '#e6dccb', z);
-      desk(x, 2, 1.2, z); laptop(x, 2.5, 1.35, z); chair(x, 2.5, 2.2, z);
-      plant(x, 4.7, 0.5, 1, z);
-      box(x, 0.6, 3.6, 0.8, 0.8, 22, ['#c9c2b6', '#b3ab9e', '#9e968a'], z); // Kiste
-    } else {
-      rug(x, 2.6, 2.4, 2.8, 2.2, C.rug, z);
-      desk(x, 1.0, 0.7, z); monitor(x, 1.3, 0.75, z); laptop(x, 1.95, 0.9, z); chair(x, 1.5, 1.7, z);
-      shelf(x, 3.4, 0.2, z); plant(x, 5.3, 0.4, 1.2, z);
-      screenTV(x, 4.6, z + 40);
-    }
+    const z = 16, has = (k) => OWN.has(k);
+    if (has('teppich')) rug(x, 2.6, 2.4, 2.8, 2.2, C.rug, z);
+    desk(x, 1.0, 0.7, z); if (has('monitor')) monitor(x, 1.3, 0.75, z); laptop(x, 1.95, 0.9, z); chair(x, 1.5, 1.7, z);
+    if (has('regal')) shelf(x, 3.4, 0.2, z);
+    if (has('pflanze')) plant(x, 5.3, 0.4, 1.2, z);
+    if (has('tv')) screenTV(x, 4.6, z + 40);
+    if (!has('regal')) box(x, 3.6, 0.5, 0.8, 0.8, 22, ['#c9c2b6', '#b3ab9e', '#9e968a'], z); // Umzugskiste, bis das Regal da ist
     drawWalker(x, stage, t);
-    if (stage >= 2) {
-      sofa(x, 2.9, 3.6, z);
-      box(x, 3.4, 2.7, 1.0, 0.6, 14, C.wood, z); // Couchtisch
-      lamp(x, 5.5, 3.0, z); plant(x, 0.4, 4.3, 0.9, z);
-    }
+    if (has('sofa')) { sofa(x, 2.9, 3.6, z); box(x, 3.4, 2.7, 1.0, 0.6, 14, C.wood, z); }
+    if (has('lampe')) lamp(x, 5.5, 3.0, z);
+    if (has('pflanze2')) plant(x, 0.4, 4.3, 0.9, z);
     if (stage >= 3) {
       const z2 = z + 120;
-      // Galerie (obere Etage) hinten
       box(x, 0, 0, 6, 2.2, 12, ['#d8c3a5', C.white[1], C.white[2]], z2 - 12);
-      // Glasgeländer
       poly(x, [P(0.2, 2.2, z2 + 34), P(6, 2.2, z2 + 34), P(6, 2.2, z2), P(0.2, 2.2, z2)], 'rgba(190,225,255,0.35)', 'rgba(255,255,255,0.7)');
-      // Treppe
       for (let k = 0; k < 8; k++) box(x, 5.2, 2.2 + 0.35 * (7 - k), 0.7, 0.35, 15, C.wood, z + k * 15);
-      // Lounge oben
-      sofa(x, 0.8, 1.0, z2); plant(x, 3.4, 0.4, 1.1, z2); trophy(x, 4.2, 0.6, z2 + 0); coffee(x, 2.9, 0.4, z2);
-      lamp(x, 0.3, 1.6, z2);
+      if (has('lounge')) sofa(x, 0.8, 1.0, z2);
+      if (has('pflanze3')) plant(x, 3.4, 0.4, 1.1, z2);
+      if (has('trophaee')) trophy(x, 4.2, 0.6, z2);
+      if (has('kaffee')) coffee(x, 2.9, 0.4, z2);
+      if (has('lampe2')) lamp(x, 0.3, 1.6, z2);
+    }
+    // gerade gekauft: Funkeln an der Stelle des neuen Möbelstücks
+    if (POP && POP.id && ANCHOR[POP.id]) {
+      const age = (POP.now - POP.at) / 1000;
+      if (age >= 0 && age < 1.6) {
+        const [ai, aj, az] = ANCHOR[POP.id], [cx, cy] = P(ai, aj, az + (az >= 136 ? 0 : 0)), k = 1 - age / 1.6;
+        glo(x, cx, cy - 20, 110 * (0.6 + 0.4 * k), '#fff0b0', 0.7 * k);
+        for (let n = 0; n < 8; n++) { const an = n / 8 * T2 + age * 2, d = 40 + age * 70; x.globalAlpha = k; spk(x, cx + Math.cos(an) * d, cy - 20 + Math.sin(an) * d * 0.6, 10 * k + 4, '#f2c230'); }
+        x.globalAlpha = 1;
+      }
     }
     x.restore();
   }
@@ -319,7 +324,7 @@
     1: [[3.0, 2.9, 2.4, 'coffee'], [4.4, 2.2, 1.6, 'stand'], [4.3, 4.0, 0, ''], [2.3, 4.2, 1.8, 'wave'], [1.7, 3.0, 0, '']],
     2: [[2.0, 2.45, 2.4, 'coffee'], [3.2, 2.35, 0, ''], [4.9, 2.4, 2.0, 'cheer'], [3.2, 2.35, 0, ''], [2.45, 3.1, 0, ''], [2.45, 4.5, 1.8, 'wave'], [1.0, 4.0, 0, ''], [1.0, 2.7, 0, '']],
   };
-  PATHS[3] = PATHS[2];
+  PATHS[1] = PATHS[2]; PATHS[3] = PATHS[2];
   function walker(stage, t) {
     const pts = PATHS[stage], SPD = 0.9;
     const segs = []; let T = 0;
@@ -358,7 +363,8 @@
     who: WHO,
     setWho(w) { CUR = w === 'm' ? 'm' : 'w'; },
     // Raum mit laufender Figur
-    room(x, W, H_, stage, t, night) {
+    room(x, W, H_, stage, t, night, owned, pop) {
+      OWN = new Set(owned || []); POP = pop ? { ...pop, now: performance.now() } : null;
       x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, x.canvas.width, x.canvas.height); x.restore();
       x.save(); const k = x.canvas.width / W; x.scale(k, k);
       const g = x.createLinearGradient(0, 0, 0, H_);
