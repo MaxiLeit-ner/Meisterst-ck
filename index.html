@@ -343,6 +343,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   <div class="mwrap">
     <div class="shead"><h2 class="sh">Einstellungen</h2><button class="mini" id="settOk">Fertig</button></div>
     <div class="srow"><div><b>Morgen-Modus</b><small>Jeden Morgen zuerst manifestieren</small></div><label class="sw"><input type="checkbox" id="swMorning"><i></i></label></div>
+    <div class="srow"><div><b>Sperre mit Kurzbefehlen</b><small>Nach dem Manifest die Apps für heute freigeben. Einrichtung siehe Anleitung.</small></div><label class="sw"><input type="checkbox" id="swLock"><i></i></label></div>
     <h2 class="sh2">Mein großes Ziel</h2>
     <form class="vform" id="vSet"><textarea id="vSetIn" aria-label="Mein großes Ziel"></textarea><button class="mini" id="vSetOk">Ziel speichern</button></form>
     <h2 class="sh2">Deine Figur</h2>
@@ -718,7 +719,7 @@ function render(){
 $("addStep").onsubmit=e=>{e.preventDefault();const g=goal(),v=$("stepIn").value.trim();if(!g||!v)return;
   const s={id:uid(),text:v};if($("stepIn").dataset.front){g.steps.unshift(s);delete $("stepIn").dataset.front}else g.steps.push(s);
   $("stepIn").value="";$("stepIn").placeholder="Nächster kleiner Schritt (15–30 Min)";save()};
-$("manOk").onclick=()=>{const v=$("manIn").value.trim();if(!v){$("manIn").focus();return}if(!S.vision){S.vision=v;$("manIn").value="";save();window.scrollTo(0,0);return}S.man.unshift({d:day(),t:v});$("manIn").value="";save();window.scrollTo(0,0)};
+$("manOk").onclick=()=>{const v=$("manIn").value.trim();if(!v){$("manIn").focus();return}if(!S.vision){S.vision=v;$("manIn").value="";save();window.scrollTo(0,0);return}S.man.unshift({d:day(),t:v});unlockApps();$("manIn").value="";save();window.scrollTo(0,0)};
 $("addRw").onsubmit=e=>{e.preventDefault();const t=$("rwIn").value.trim(),l=parseInt($("rwLvl").value,10);
   if(!t){$("rwIn").focus();return}if(!(l>=2)){$("rwLvl").focus();return}rewards().push({id:uid(),lvl:l,text:t,done:false});$("rwIn").value="";$("rwLvl").value="";save()};
 $("addIdea").onsubmit=e=>{e.preventDefault();const v=$("ideaIn").value.trim();if(!v)return;S.ideaCount=(S.ideaCount||S.ideas.length)+1;S.ideas.unshift({id:uid(),text:v});$("ideaIn").value="";save()};
@@ -1013,6 +1014,10 @@ $("goalRen").onclick=()=>{const g=goal();if(!g)return;const f=$("goalRenF");if(f
   const form=document.createElement("form");form.className="add";form.id="goalRenF";form.innerHTML='<input id="goalRenIn" aria-label="Neuer Name für das Ziel" autocomplete="off"><button>Speichern</button>';
   $("goalTabs").after(form);$("goalRenIn").value=g.title;$("goalRenIn").focus();$("goalRenIn").select();
   form.onsubmit=ev=>{ev.preventDefault();const v=$("goalRenIn").value.trim();if(!v)return;g.title=v;form.remove();toast("Ziel umbenannt");save()}};
+// Kurzbefehl-Sperre: nach dem Manifest "Aufstieg frei" ausführen, das schreibt das heutige Datum in eine Datei
+$("gear").addEventListener("click",()=>{$("swLock").checked=!!S.lockShortcut});
+$("swLock").onchange=e=>{S.lockShortcut=e.target.checked;save()};
+function unlockApps(){if(!S.lockShortcut)return;setTimeout(()=>{location.href="shortcuts://run-shortcut?name="+encodeURIComponent("Aufstieg frei")},700)}
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
