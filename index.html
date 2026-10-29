@@ -768,7 +768,7 @@ function runGag(){const img=document.querySelector("#scene .bimg"),box=document.
   img.setAttribute("href","biber/"+g.img+".webp");img.setAttribute("class","bimg "+(g.calm?"m-gag-calm":"m-gag"));
   const b=document.createElement("div");b.className="bubble";b.textContent=g.say[Math.random()*g.say.length|0];box.appendChild(b);
   let chipT=null;if(g.chips&&!calm){const svg=$("scene");chipT=setInterval(()=>{for(let k=0;k<3;k++){const r=document.createElementNS("http://www.w3.org/2000/svg","rect");
-    r.setAttribute("x",330+Math.random()*20);r.setAttribute("y",120+Math.random()*20);r.setAttribute("width",4+Math.random()*4);r.setAttribute("height",2+Math.random()*2);r.setAttribute("fill",["#e2b77c","#c99a5c","#f0cf9f"][k]);r.setAttribute("class","chip");
+    r.setAttribute("x",320+Math.random()*24);r.setAttribute("y",95+Math.random()*20);r.setAttribute("width",4+Math.random()*4);r.setAttribute("height",2+Math.random()*2);r.setAttribute("fill",["#e2b77c","#c99a5c","#f0cf9f"][k]);r.setAttribute("class","chip");
     r.style.setProperty("--dx",(Math.random()*-60-10)+"px");r.style.setProperty("--dy",(Math.random()*-40+10)+"px");r.style.setProperty("--rot",(Math.random()*360)+"deg");r.style.transformBox="fill-box";svg.appendChild(r);setTimeout(()=>r.remove(),950)}},180)}
   setTimeout(()=>{clearInterval(chipT);b.remove();if(img.isConnected){img.setAttribute("href",old.href);img.setAttribute("class",old.cls)}gagOn=false;idleT=setTimeout(runGag,45000)},g.dur)}
 resetIdle();
