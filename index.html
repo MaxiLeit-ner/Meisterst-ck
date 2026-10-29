@@ -177,6 +177,16 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 .item .it{min-width:0}.item b{display:block}.item small{color:var(--muted);display:block;line-height:1.3}
 .item.own{border-color:var(--green)}.item.lock{opacity:.6}
 .item .tag{white-space:nowrap}.buy{white-space:nowrap;font-variant-numeric:tabular-nums}.buy:disabled{opacity:.45;cursor:not-allowed}
+.places{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}.places button{flex:1;font:inherit;font-size:.85rem;font-weight:700;padding:8px 10px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:40px;white-space:nowrap}
+.places button[aria-selected="true"]{background:var(--green);border-color:var(--green);color:var(--bg)}.places button:disabled{opacity:.5;cursor:not-allowed}
+.item.reset{border-color:var(--ruler);background:color-mix(in srgb,var(--ruler) 18%,var(--surface));grid-column:1/-1}
+.pinhint{margin:-4px 0 10px;color:var(--muted);font-size:.9rem}
+#ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;padding:16px;border-radius:14px;background:#c9a27a radial-gradient(rgba(0,0,0,.12) 1px,transparent 1.5px) 0 0/8px 8px;border:6px solid #6b4a33}
+#ideas li{flex-direction:column;align-items:flex-start;gap:8px;border:0;padding:16px 12px 12px;background:#fff3a0;color:#2a2620;box-shadow:0 4px 8px rgba(0,0,0,.2);transform:rotate(-1.5deg);position:relative;min-width:0}
+#ideas li:nth-child(4n+2){background:#ffc4d6;transform:rotate(1.2deg)}#ideas li:nth-child(4n+3){background:#bfe6ff;transform:rotate(-.6deg)}#ideas li:nth-child(4n+4){background:#c8f5c0;transform:rotate(1.8deg)}
+#ideas li::before{content:"";position:absolute;top:5px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#e53935;box-shadow:0 2px 2px rgba(0,0,0,.3)}
+#ideas li .t{font-weight:600}#ideas li .x{position:absolute;top:2px;right:4px;color:#6b5a4a}
+#ideas li.empty{grid-column:1/-1;background:#fff8d6;transform:none}
 .office canvas{display:block;width:100%;height:auto}
 .who{display:flex;gap:8px}.who button{flex:1;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}.who button.on{background:var(--green);color:var(--bg);border-color:var(--green)}
 .scene{position:relative;background:linear-gradient(var(--sky),var(--surface));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
@@ -304,7 +314,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   <section data-block="char" class="char" id="char"></section>
 
   <section data-block="shop" id="shopSec">
-    <div class="sechead"><h2>Einrichtung</h2><span class="coins" id="shopCoins"></span></div>
+    <div class="sechead"><h2 id="shopH">Einrichtung</h2><span class="coins" id="shopCoins"></span></div>
     <div class="shop" id="shop"></div>
   </section>
 
@@ -363,7 +373,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   </section>
 
   <section data-block="ideas">
-    <div class="sechead"><h2>Ideen-Parkplatz</h2></div>
+    <div class="sechead"><h2>Ideen-Pinnwand</h2></div>
+    <p class="pinhint">Jede Idee hängt auch an der Pinnwand in deinem Büro.</p>
     <form class="add" id="addIdea"><input id="ideaIn" placeholder="Idee raus aus dem Kopf …" autocomplete="off"><button>Parken</button></form>
     <ul id="ideas"></ul>
     <div id="planBox"></div>
@@ -410,36 +421,56 @@ function esc(s){const e=document.createElement("span");e.textContent=s;return e.
 const TITLES=[[1,"Starter"],[3,"Macher"],[5,"Gründer"],[10,"Profi"],[15,"Visionär"],[20,"Legende"]];
 const DEF_UNLOCKS=[[3,"Lieblingsessen gönnen"],[5,"Etwas Neues für dein Ziel kaufen"],[10,"Ein freier Tag nur für dich"]];
 function rewards(){if(!S.rewards)S.rewards=DEF_UNLOCKS.map(u=>({id:uid(),lvl:u[0],text:u[1],done:false}));S.rewards.sort((a,b)=>a.lvl-b.lvl);return S.rewards}
+// Freischalt-Level so verteilt, dass alles bei täglicher Nutzung etwa ein Jahr dauert (ca. 55 Münzen pro Tag)
+const PLACES={buero:{name:"Büro",lvl:1},garage:{name:"Garage",lvl:12},villa:{name:"Villa",lvl:16}};
 const SHOP=[
- {id:"pflanze",name:"Zimmerpflanze",price:60,stage:1,desc:"Erstes Grün im Raum"},
- {id:"teppich",name:"Teppich",price:90,stage:1,desc:"Macht den Raum gemütlich"},
- {id:"regal",name:"Bücherregal",price:180,stage:1,desc:"Endlich ausgepackt: die Kiste verschwindet"},
- {id:"lampe",name:"Stehlampe",price:140,stage:1,desc:"Warmes Licht für lange Abende"},
- {id:"monitor",name:"Zweiter Bildschirm",price:260,stage:1,desc:"Mehr Platz für große Pläne"},
- {id:"pflanze2",name:"Große Pflanze",price:120,stage:1,desc:"Für die gemütliche Ecke"},
- {id:"sofa",name:"Sofa mit Couchtisch",price:450,stage:2,desc:"Pausen gehören zum Erfolg"},
- {id:"tv",name:"Bildschirm-Wand",price:520,stage:2,desc:"Für Präsentationen und Filmabende"},
- {id:"kaffee",name:"Kaffeebar",price:380,stage:3,desc:"Oben auf der Galerie"},
- {id:"lounge",name:"Lounge-Sofa",price:700,stage:3,desc:"Mit Blick über die Stadt"},
- {id:"pflanze3",name:"Galerie-Pflanze",price:200,stage:3,desc:"Grün für die zweite Etage"},
- {id:"lampe2",name:"Designer-Lampe",price:420,stage:3,desc:"Das Licht auf der Galerie"},
- {id:"trophaee",name:"Trophäe",price:900,stage:3,desc:"Für alles, was du erreicht hast"}];
-const STAGE_LVL={1:1,2:5,3:15};
+ {id:"pflanze",place:"buero",name:"Zimmerpflanze",price:60,lvl:1,desc:"Erstes Grün im Raum"},
+ {id:"teppich",place:"buero",name:"Teppich",price:90,lvl:1,desc:"Macht den Raum gemütlich"},
+ {id:"regal",place:"buero",name:"Bücherregal",price:180,lvl:1,desc:"Die Umzugskiste verschwindet"},
+ {id:"lampe",place:"buero",name:"Stehlampe",price:140,lvl:2,desc:"Warmes Licht für lange Abende"},
+ {id:"monitor",place:"buero",name:"Zweiter Bildschirm",price:260,lvl:3,desc:"Mehr Platz für große Pläne"},
+ {id:"pflanze2",place:"buero",name:"Große Pflanze",price:120,lvl:3,desc:"Für die gemütliche Ecke"},
+ {id:"sofa",place:"buero",name:"Sofa mit Couchtisch",price:450,lvl:5,desc:"Pausen gehören zum Erfolg"},
+ {id:"tv",place:"buero",name:"Bildschirm-Wand",price:520,lvl:6,desc:"Für Präsentationen und Filmabende"},
+ {id:"kaffee",place:"buero",name:"Kaffeebar",price:380,lvl:8,desc:"Oben auf der Galerie"},
+ {id:"pflanze3",place:"buero",name:"Galerie-Pflanze",price:200,lvl:8,desc:"Grün für die zweite Etage"},
+ {id:"lounge",place:"buero",name:"Lounge-Sofa",price:700,lvl:9,desc:"Mit Blick über die Stadt"},
+ {id:"lampe2",place:"buero",name:"Designer-Lampe",price:420,lvl:10,desc:"Das Licht auf der Galerie"},
+ {id:"trophaee",place:"buero",name:"Trophäe",price:900,lvl:11,desc:"Für alles, was du erreicht hast"},
+ {id:"werkzeug",place:"garage",name:"Werkzeugwand",price:400,lvl:12,desc:"Ordnung ist der halbe Weg"},
+ {id:"roller",place:"garage",name:"Motorroller",price:800,lvl:12,desc:"Klein, wendig, deins"},
+ {id:"neon",place:"garage",name:"Neon-Schild",price:300,lvl:13,desc:"Leuchtet dich jeden Tag an"},
+ {id:"klein",place:"garage",name:"Kleinwagen",price:1500,lvl:13,desc:"Das erste eigene Auto"},
+ {id:"suv",place:"garage",name:"SUV",price:2500,lvl:14,desc:"Platz für große Pläne"},
+ {id:"oldtimer",place:"garage",name:"Oldtimer",price:2600,lvl:15,desc:"Ein Klassiker mit Geschichte"},
+ {id:"sport",place:"garage",name:"Sportwagen",price:3500,lvl:16,desc:"Der Traumwagen"},
+ {id:"palmen",place:"villa",name:"Palmen",price:500,lvl:16,desc:"Urlaubsgefühl im Garten"},
+ {id:"lichter",place:"villa",name:"Gartenlichter",price:400,lvl:16,desc:"Der Weg leuchtet abends"},
+ {id:"grill",place:"villa",name:"Grillplatz",price:700,lvl:17,desc:"Für Abende mit Freunden"},
+ {id:"lounge2",place:"villa",name:"Garten-Lounge",price:900,lvl:18,desc:"Draußen entspannen"},
+ {id:"liegen",place:"villa",name:"Sonnenliegen",price:600,lvl:18,desc:"Direkt am Wasser"},
+ {id:"pool",place:"villa",name:"Pool",price:2000,lvl:19,desc:"Die Krönung"}];
+
 function coins(){return Math.max(0,stats().xp-(S.spent||0))}
-let POPBUY=null;
-function renderShop(){const st=window.Buero?Buero.stageFor(stats().L):1,c=coins();S.owned=S.owned||[];
-  $("shopCoins").innerHTML=`<i class="coin" aria-hidden="true"></i>${c.toLocaleString("de-DE")} Münzen`;
-  $("shop").innerHTML=SHOP.map(it=>{const own=S.owned.includes(it.id),lock=it.stage>st,poor=c<it.price;
-    const act=own?'<span class="tag">Im Büro</span>':lock?`<span class="tag">ab Level ${STAGE_LVL[it.stage]}</span>`:`<button class="mini buy" data-buy="${it.id}" ${poor?"disabled":""}>${it.price} Münzen</button>`;
+let POPBUY=null,RESET=false;
+function placeOwned(){const o=S.owned||[];return o.map(k=>k==="lounge2"?"lounge":k).filter(k=>k!=="lounge"||o.includes("lounge2"))}
+function renderShop(){const L=stats().L,c=coins();S.owned=S.owned||[];const pl=OFFICE.place||"buero";
+  $("shopCoins").innerHTML=`<i class="coin" aria-hidden="true"></i>${c.toLocaleString("de-DE")} Münzen`;$("shopH").textContent="Einrichtung · "+PLACES[pl].name;
+  const all=SHOP.every(it=>S.owned.includes(it.id));
+  $("shop").innerHTML=(all?`<div class="item reset"><div class="it"><b>Alles erreicht!</b><small>Starte Kapitel ${(S.chapter||1)+1}: Level, Münzen und Einrichtung beginnen von vorn. Deine Erfolge, Rückblick und Belohnungen bleiben.</small></div><button class="mini" id="resetBtn">${RESET?"Ja, neu starten":"Neues Kapitel"}</button></div>`:"")+SHOP.filter(it=>it.place===pl).map(it=>{const own=S.owned.includes(it.id),lock=it.lvl>L,poor=c<it.price;
+    const act=own?'<span class="tag">Gekauft</span>':lock?`<span class="tag">ab Level ${it.lvl}</span>`:`<button class="mini buy" data-buy="${it.id}" ${poor?"disabled":""}>${it.price} Münzen</button>`;
     return `<div class="item ${own?"own":""} ${lock?"lock":""}"><div class="it"><b>${esc(it.name)}</b><small>${esc(it.desc)}</small></div>${act}</div>`}).join("")}
-document.addEventListener("click",e=>{const b=e.target.closest("[data-buy]");if(!b)return;const it=SHOP.find(x=>x.id===b.dataset.buy);if(!it)return;
+document.addEventListener("click",e=>{const tb=e.target.closest("[data-place]");if(tb&&!tb.disabled){OFFICE.place=tb.dataset.place;render();return}
+  if(e.target.id==="resetBtn"){if(!RESET){RESET=true;renderShop();setTimeout(()=>{RESET=false;try{renderShop()}catch(_){}},5000);return}
+  RESET=false;S.chapter=(S.chapter||1)+1;S.prestigeXp=stats().raw;S.spent=0;S.owned=[];S.lvl=1;lastXp=null;OFFICE.place="buero";toast(`Kapitel ${S.chapter} beginnt. Auf ein Neues!`);save();window.scrollTo(0,0);return}
+  const b=e.target.closest("[data-buy]");if(!b)return;const it=SHOP.find(x=>x.id===b.dataset.buy);if(!it)return;
   S.owned=S.owned||[];if(S.owned.includes(it.id)||coins()<it.price)return;
-  S.spent=(S.spent||0)+it.price;S.owned.push(it.id);POPBUY={id:it.id,at:performance.now()};
+  S.spent=(S.spent||0)+it.price;S.owned.push(it.id);POPBUY={id:it.id,at:performance.now()};OFFICE.place=it.place;
   toast(`${it.name} gekauft! −${it.price} Münzen`);save();const oc=$("office");if(oc)oc.scrollIntoView({behavior:"smooth",block:"center"})});
 function stats(){const man=(S.man||[]).length,ck=(S.checks||[]).length,st=S.log.length,id=S.ideaCount||S.ideas.length;
   const days=new Set(S.log.map(l=>l.d)),perfect=(S.man||[]).filter(m=>days.has(m.d)).length;
-  const wins=(S.pics||[]).filter(p=>p.kind==="win").length;const xp=st*20+man*10+ck*15+id*5+perfect*10+wins*50;let L=1,rest=xp;while(rest>=L*100){rest-=L*100;L++}
-  return{xp,L,rest,need:L*100,man,ck,st,id,perfect}}
+  const wins=(S.pics||[]).filter(p=>p.kind==="win").length;const raw=st*20+man*10+ck*15+id*5+perfect*10+wins*50,xp=Math.max(0,raw-(S.prestigeXp||0));let L=1,rest=xp;while(rest>=L*100){rest-=L*100;L++}
+  return{xp,raw,L,rest,need:L*100,man,ck,st,id,perfect}}
 const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function confetti(){if(calm)return;const c=$("confetti"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
   const cols=["#f2c230","#24493b","#2f7a4f","#e7ece9","#b4532a"],P=Array.from({length:110},()=>({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*12,vy:Math.random()*-12-3,s:4+Math.random()*5,c:cols[Math.random()*5|0],r:Math.random()*6}));
@@ -450,7 +481,7 @@ function levelUp(L,txt){$("lvNum").textContent=L;$("lvTxt").textContent=txt;$("l
 $("lvOk").onclick=()=>{$("lvlup").hidden=true;};
 let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
 let lastXp=null;
-const BLOCKS={char:"Level & Büro",shop:"Einrichtung",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
+const BLOCKS={char:"Level & Büro",shop:"Einrichtung",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Pinnwand",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
 function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>all.includes(x.id));all.forEach(id=>{if(!L.find(x=>x.id===id)){const ci=L.findIndex(x=>x.id==="char");if(id==="shop"&&ci>=0)L.splice(ci+1,0,{id,on:true});else L.push({id,on:true})}});S.layout=L;
   const w=document.querySelector(".wrap"),end=$("save");
   L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}})}
@@ -539,13 +570,14 @@ function render(){
   if(todayMan){const m=document.createElement("div");m.className="mantra";m.textContent="„"+todayMan.t+"“";T.prepend(m)}
   // Charakter
   const C=stats(),title=TITLES.filter(t=>t[0]<=C.L).pop()[1],RW=rewards(),nx=RW.find(u=>u.lvl>C.L),ready=RW.filter(u=>u.lvl<=C.L&&!u.done);
-  $("char").innerHTML=`<div class="chead"><div><div class="ttl">${title}</div><div class="lvl">Level ${C.L}</div></div><div class="xpcap"><i class="coin" aria-hidden="true"></i>${coins().toLocaleString("de-DE")} Münzen</div></div>
+  $("char").innerHTML=`<div class="chead"><div><div class="ttl">${title}${(S.chapter||1)>1?` · Kapitel ${S.chapter}`:""}</div><div class="lvl">Level ${C.L}</div></div><div class="xpcap"><i class="coin" aria-hidden="true"></i>${coins().toLocaleString("de-DE")} Münzen</div></div>
+   <div class="places" role="tablist">${Object.entries(PLACES).map(([k,v])=>`<button role="tab" data-place="${k}" aria-selected="${(OFFICE.place||"buero")===k}" ${C.L<v.lvl?"disabled":""}>${v.name}${C.L<v.lvl?` · ab Lvl ${v.lvl}`:""}</button>`).join("")}</div>
    <div class="scene office"><canvas id="office" width="1200" height="840" role="img" aria-label="Dein Büro, deine Figur läuft darin herum"></canvas></div>
    <div class="rcap"><span id="buildCap"></span><span id="buildNum"></span></div>
    <div><div class="xpbar"><i style="width:${C.rest/C.need*100}%"></i></div><div class="xpcap">${C.rest} / ${C.need} XP bis Level ${C.L+1}</div></div>
    <div class="stats"><div class="stat">Disziplin<b>${C.st}</b></div><div class="stat">Klarheit<b>${C.man}</b></div><div class="stat">Reflexion<b>${C.ck}</b></div><div class="stat">Kreativität<b>${C.id}</b></div></div>
    <div class="unl">${ready.length?"Verdient und bereit: <b>"+ready.map(u=>esc(u.text)).join(", ")+"</b><br>":""}${nx?`Nächste Belohnung bei Level ${nx.lvl}: <b>${esc(nx.text)}</b>`:"Leg dir unten die nächste Belohnung fest."}</div>`;
-  {const st=window.Buero?Buero.stageFor(C.L):1,nxt=st===1?5:st===2?15:null;OFFICE.stage=st;$("buildCap").innerHTML=`<b>${Buero?Buero.names[st]:""}</b>`;$("buildNum").textContent=nxt?`Nächste Ausbaustufe ab Level ${nxt}`:"Höchste Ausbaustufe erreicht";}
+  {const st=window.Buero?Buero.stageFor(C.L):1,nxt=st===1?5:st===2?8:null;OFFICE.stage=st;if(C.L<PLACES[OFFICE.place||"buero"].lvl)OFFICE.place="buero";const pl=OFFICE.place||"buero";$("buildCap").innerHTML=`<b>${pl==="buero"?Buero.names[st]:"Deine "+PLACES[pl].name}</b>`;$("buildNum").textContent=pl!=="buero"?`${SHOP.filter(i=>i.place===pl&&(S.owned||[]).includes(i.id)).length} von ${SHOP.filter(i=>i.place===pl).length} gekauft`:nxt?`Nächste Ausbaustufe ab Level ${nxt}`:"Höchste Ausbaustufe erreicht";}
   if(lastXp!==null&&C.xp>lastXp){const pL=S.lvl||1;
     if(C.L>pL){const u=RW.filter(x=>x.lvl>pL&&x.lvl<=C.L);const ns=window.Buero?Buero.stageFor(C.L):1,os=window.Buero?Buero.stageFor(pL):1;
       levelUp(C.L,`${ns>os?"Neue Ausbaustufe: "+Buero.names[ns]+"! ":""}Du bist jetzt ${title}.${u.length?" Belohnung verdient: "+u.map(x=>x.text).join(", ")+". Gönn sie dir!":""}`)}else toast(`+${C.xp-lastXp} XP`)}
@@ -733,9 +765,9 @@ $("whoW").onclick=()=>{setWho("w");save()};$("whoM").onclick=()=>{setWho("m");sa
 const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function frame(ms){const t=reduce?1.2:ms/1000;
   if(window.Buero){
-    const oc=$("office");if(oc&&oc.isConnected&&oc.offsetParent){const r=oc.getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight)Buero.room(oc.getContext("2d"),600,420,OFFICE.stage,t,OFFICE.stage>=3||nightNow(),S.owned,POPBUY)}
+    const oc=$("office");if(oc&&oc.isConnected&&oc.offsetParent){const r=oc.getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight)((OFFICE.place||"buero")==="buero"?Buero.room(oc.getContext("2d"),600,420,OFFICE.stage,t,OFFICE.stage>=3||nightNow(),S.owned,POPBUY,(S.ideas||[]).length):Buero.place(oc.getContext("2d"),600,420,OFFICE.place,t,nightNow(),placeOwned()))}
     if(!$("morning").hidden)Buero.figure($("mFig").getContext("2d"),170,200,"wave",t);
-    if(!$("lvlup").hidden){const lc=$("lvScene").getContext("2d");Buero.room(lc,400,280,OFFICE.stage,t,OFFICE.stage>=3,S.owned);const k=lc.canvas.width/400;lc.save();lc.scale(k,k);lc.globalAlpha=1;lc.restore();}
+    if(!$("lvlup").hidden){const lc=$("lvScene").getContext("2d");Buero.room(lc,400,280,OFFICE.stage,t,OFFICE.stage>=3,S.owned,null,(S.ideas||[]).length);const k=lc.canvas.width/400;lc.save();lc.scale(k,k);lc.globalAlpha=1;lc.restore();}
   }
   if(!reduce)requestAnimationFrame(frame)}
 requestAnimationFrame(frame);

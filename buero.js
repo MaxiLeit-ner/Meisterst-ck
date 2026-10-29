@@ -189,12 +189,13 @@
     return WH;
   }
 
-  let OWN = new Set(), POP = null;
+  let OWN = new Set(), POP = null, IDEAS = 0;
   const ANCHOR = { teppich: [4, 3.5, 16], monitor: [1.6, 0.8, 60], regal: [4, 0.4, 70], pflanze: [5.5, 0.6, 40], tv: [5.4, 0.2, 80], sofa: [3.9, 4, 40], lampe: [5.55, 3.05, 90], pflanze2: [0.6, 4.5, 40],
     lounge: [1.8, 1.4, 170], pflanze3: [3.6, 0.6, 175], trophaee: [4.35, 0.75, 170], kaffee: [3.05, 0.55, 165], lampe2: [0.35, 1.65, 220] };
   function sceneBody(x, stage, t, night) {
     x.save();
     const WH = room(x, stage, night);
+    if (stage >= 3) pinwall(x, 1.7, 3.3, 170, 222, IDEAS); else pinwall(x, 1.05, 2.6, 98, 140, IDEAS);
     const z = 16, has = (k) => OWN.has(k);
     if (has('teppich')) rug(x, 2.6, 2.4, 2.8, 2.2, C.rug, z);
     desk(x, 1.0, 0.7, z); if (has('monitor')) monitor(x, 1.3, 0.75, z); laptop(x, 1.95, 0.9, z); chair(x, 1.5, 1.7, z);
@@ -325,6 +326,8 @@
     2: [[2.0, 2.45, 2.4, 'coffee'], [3.2, 2.35, 0, ''], [4.9, 2.4, 2.0, 'cheer'], [3.2, 2.35, 0, ''], [2.45, 3.1, 0, ''], [2.45, 4.5, 1.8, 'wave'], [1.0, 4.0, 0, ''], [1.0, 2.7, 0, '']],
   };
   PATHS[1] = PATHS[2]; PATHS[3] = PATHS[2];
+  PATHS.g = [[4.6, 1.6, 1.6, 'stand'], [4.6, 4.3, 0, ''], [4.2, 4.5, 2.0, 'cheer'], [4.6, 3.0, 0, '']];
+  PATHS.v = [[2.35, 2.5, 1.4, 'wave'], [2.35, 4.7, 0, ''], [3.4, 4.8, 2.0, 'cheer'], [2.35, 4.7, 0, '']];
   function walker(stage, t) {
     const pts = PATHS[stage], SPD = 0.9;
     const segs = []; let T = 0;
@@ -357,14 +360,110 @@
     const s = Math.min(W / rw, H_ / rh) * 0.95;
     x.translate(W / 2, H_ / 2 + (stage >= 3 ? 10 : 6)); x.scale(s, s); x.translate(-322, -cy);
   }
+  // ---------- Pinnwand mit Ideen-Zetteln an der Rückwand ----------
+  function onBackWall(x, i, z, fn) { const [px, py] = P(i, 0.16, z); x.save(); x.translate(px, py); x.transform(1, 0.5, 0, 1, 0, 0); fn(); x.restore(); }
+  function pinwall(x, i0, i1, z0, z1, n) {
+    const q = wallQuad(i0, i1, 0.16, z0, z1);
+    poly(x, q, '#6b4a33'); const k = 3;
+    poly(x, [[q[0][0] + k, q[0][1] + k], [q[1][0] - k, q[1][1] + k], [q[2][0] - k, q[2][1] - k], [q[3][0] + k, q[3][1] - k]], '#c9a27a');
+    const cols = ['#fff3a0', '#ffc4d6', '#bfe6ff', '#c8f5c0'], cnt = Math.min(n, 8), w = (i1 - i0) * ISO.tw / 2;
+    for (let m = 0; m < cnt; m++) {
+      const cx = ((m % 4) + 0.5) / 4 * w, row = Math.floor(m / 4), zc = z1 - 12 - row * ((z1 - z0) * 0.48);
+      onBackWall(x, i0, zc, () => {
+        x.rotate(((m * 37) % 7 - 3) * 0.03);
+        x.fillStyle = 'rgba(0,0,0,0.15)'; x.fillRect(cx - 7, 1, 15, 14);
+        x.fillStyle = cols[m % 4]; x.fillRect(cx - 8, -1, 15, 14);
+        x.strokeStyle = 'rgba(60,40,30,0.5)'; x.lineWidth = 1; x.beginPath(); x.moveTo(cx - 5, 4); x.lineTo(cx + 4, 4); x.moveTo(cx - 5, 8); x.lineTo(cx + 2, 8); x.stroke();
+        x.fillStyle = '#e53935'; x.beginPath(); x.arc(cx - 0.5, 0, 2, 0, T2); x.fill();
+      });
+    }
+  }
+
+  // ---------- Garage ----------
+  function wheel(x, px, py) { x.fillStyle = '#1d1f25'; x.beginPath(); x.ellipse(px, py, 9, 10, 0, 0, T2); x.fill(); x.fillStyle = '#9aa0aa'; x.beginPath(); x.ellipse(px, py, 4, 4.5, 0, 0, T2); x.fill(); }
+  function car(x, i, j, kind) {
+    const K = { klein: { len: 1.6, h1: 18, h2: 16, col: ['#9fd3ff', '#6fb3ec', '#5598d6'], cab: 0.5 },
+      suv: { len: 1.9, h1: 26, h2: 22, col: ['#4a4e58', '#33363e', '#25272d'], cab: 0.55 },
+      sport: { len: 2.0, h1: 14, h2: 11, col: ['#ff6b5e', '#e53935', '#b8282a'], cab: 0.38 },
+      oldtimer: { len: 1.9, h1: 20, h2: 17, col: ['#f6ecd2', '#e5d6b0', '#cdbb90'], cab: 0.42 } }[kind];
+    const z0 = 16 + 7, wid = 0.85, L = K.len;
+    x.fillStyle = 'rgba(0,0,0,0.18)'; poly(x, [P(i - 0.05, j - 0.05, 16.5), P(i + L + 0.05, j - 0.05, 16.5), P(i + L + 0.05, j + wid + 0.05, 16.5), P(i - 0.05, j + wid + 0.05, 16.5)], 'rgba(0,0,0,0.18)');
+    box(x, i, j, L, wid, K.h1, K.col, z0);
+    const ci = i + L * (kind === 'sport' ? 0.35 : 0.22);
+    box(x, ci, j + 0.08, L * K.cab, wid - 0.16, K.h2, ['#bfe0ff', '#7fa8c9', '#6a93b5'], z0 + K.h1);
+    if (kind === 'oldtimer') box(x, ci, j + 0.08, L * K.cab, wid - 0.16, 3, ['#8a5a36', '#6e4528', '#5a3a22'], z0 + K.h1 + K.h2);
+    if (kind === 'sport') { box(x, i + 0.05, j + 0.1, 0.12, wid - 0.2, 10, K.col, z0 + K.h1); }
+    for (const u of [0.45, L - 0.45]) { const [px, py] = P(i + u, j + wid, z0 + 2); wheel(x, px, py); }
+    const [hx, hy] = P(i + L, j + 0.2, z0 + K.h1 * 0.55), [hx2, hy2] = P(i + L, j + wid - 0.2, z0 + K.h1 * 0.55);
+    for (const [a, b] of [[hx, hy], [hx2, hy2]]) { glo(x, a, b, 14, '#fff6c8', 0.6); x.fillStyle = '#fff6c8'; x.beginPath(); x.arc(a, b, 3, 0, T2); x.fill(); }
+  }
+  function scooter(x, i, j) {
+    const z0 = 16;
+    for (const u of [0, 0.9]) { const [px, py] = P(i + u, j + 0.2, z0 + 9); wheel(x, px, py); }
+    box(x, i + 0.05, j + 0.05, 0.85, 0.3, 10, ['#ffd23f', '#e0b020', '#c99a10'], z0 + 12);
+    box(x, i + 0.1, j + 0.08, 0.4, 0.24, 6, ['#2a2c33', '#1d1f25', '#141518'], z0 + 22);
+    box(x, i + 0.82, j + 0.12, 0.08, 0.1, 26, ['#9aa0aa', '#7d838c', '#666b73'], z0 + 12);
+  }
+  function garageBody(x, t, night, own) {
+    const z = 16, has = (k) => own.has(k);
+    box(x, 0, 0, 6, 5, 16, ['#c9cbd0', '#8d8f94', '#6f7176']);
+    box(x, 0, 0, 6, 0.16, 130, ['#d5d7dc', '#e6e8ec', '#d5d7dc'], 16);
+    box(x, 0, 0, 0.16, 5, 130, ['#d5d7dc', '#c4c6cc', '#e6e8ec'], 16);
+    const door = wallQuadB(1.0, 4.2, 0.16, 16, 112); poly(x, door, '#aeb2ba');
+    for (let k = 1; k < 9; k++) { const a = P(0.16, 1.0, 16 + k * 12), b = P(0.16, 4.2, 16 + k * 12); x.strokeStyle = '#9599a2'; x.lineWidth = 2; x.beginPath(); x.moveTo(...a); x.lineTo(...b); x.stroke(); }
+    for (const jl of [0.3, 1.5, 2.7, 3.9, 5.0]) { const a = P(1.2, jl, 16.5), b = P(3.9, jl, 16.5); x.strokeStyle = 'rgba(255,214,90,0.8)'; x.lineWidth = 3; x.beginPath(); x.moveTo(...a); x.lineTo(...b); x.stroke(); }
+    if (has('werkzeug')) { const q = wallQuad(3.9, 5.8, 0.16, 46, 108); poly(x, q, '#8d6a4a');
+      onBackWall(x, 3.9, 100, () => { [[14, '#e53935'], [34, '#3f7cff'], [52, '#2a2c33'], [70, '#ffd23f']].forEach(([px, c]) => { x.fillStyle = c; x.fillRect(px, 6, 5, 30); x.fillRect(px - 4, 4, 13, 6); }); }); }
+    if (has('neon')) onBackWall(x, 0.6, 112, () => { x.font = '800 18px "Manrope", sans-serif'; x.shadowColor = '#ff5d8f'; x.shadowBlur = 14; x.fillStyle = '#ffd6e4'; x.fillText('Weiter geht\'s', 6, 4); x.shadowBlur = 0; });
+    if (has('roller')) scooter(x, 4.6, 0.5);
+    if (has('sport')) car(x, 1.7, 0.45, 'sport');
+    if (has('suv')) car(x, 1.7, 1.65, 'suv');
+    if (has('klein')) car(x, 1.9, 2.85, 'klein');
+    drawWalker(x, 'g', t);
+    if (has('oldtimer')) car(x, 1.7, 4.05, 'oldtimer');
+  }
+
+  // ---------- Villa ----------
+  function palm(x, i, j, s) {
+    const [px, py] = P(i, j, 16), sway = 0;
+    x.strokeStyle = '#9a6b45'; x.lineWidth = 7 * s; x.lineCap = 'round'; x.beginPath(); x.moveTo(px, py); x.quadraticCurveTo(px + 10 * s, py - 50 * s, px + 4 * s, py - 95 * s); x.stroke();
+    const tx0 = px + 4 * s, ty0 = py - 95 * s;
+    for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + (k - 2.5) * 0.55; x.save(); x.translate(tx0, ty0); x.rotate(a + sway); x.fillStyle = k % 2 ? '#3f9a52' : '#56b866'; x.beginPath(); x.ellipse(28 * s, 0, 30 * s, 8 * s, 0.25, 0, T2); x.fill(); x.restore(); }
+  }
+  function villaBody(x, t, night, own) {
+    const z = 16, has = (k) => own.has(k);
+    box(x, 0, 0, 6, 5, 16, ['#8fcf7e', '#a0805a', '#86674a']);
+    for (let i = 0; i < 6; i++) for (let j = 0; j < 5; j++) if ((i + j) % 2 === 0) poly(x, [P(i, j, 16), P(i + 1, j, 16), P(i + 1, j + 1, 16), P(i, j + 1, 16)], '#86c675');
+    for (let k = 0; k < 5; k++) poly(x, [P(2.1, 2.3 + k * 0.55, 16.5), P(2.6, 2.3 + k * 0.55, 16.5), P(2.6, 2.75 + k * 0.55, 16.5), P(2.1, 2.75 + k * 0.55, 16.5)], '#e8dfcf');
+    if (has('pool')) { const a = [P(3.8, 2.7, 16.5), P(5.7, 2.7, 16.5), P(5.7, 4.5, 16.5), P(3.8, 4.5, 16.5)]; poly(x, a, '#f3f1ec');
+      const b = [P(3.95, 2.85, 16.6), P(5.55, 2.85, 16.6), P(5.55, 4.35, 16.6), P(3.95, 4.35, 16.6)]; const g = x.createLinearGradient(b[0][0], b[0][1], b[2][0], b[2][1]); g.addColorStop(0, '#5fd0f0'); g.addColorStop(1, '#2a8fd6'); poly(x, b, g);
+      x.strokeStyle = 'rgba(255,255,255,0.55)'; x.lineWidth = 2; for (let k = 0; k < 3; k++) { const w = Math.sin(t * 2 + k) * 0.05; const p1 = P(4.2, 3.2 + k * 0.4 + w, 16.7), p2 = P(4.9, 3.2 + k * 0.4 - w, 16.7); x.beginPath(); x.moveTo(...p1); x.lineTo(...p2); x.stroke(); } }
+    // Villa: zwei weiße Kuben mit Glasfronten und Flachdach
+    const glass = night ? ['#ffd98a', '#ffcf70'] : ['#9fc8e8', '#7fb0d8'];
+    box(x, 0.3, 0.3, 3.2, 1.9, 72, ['#f4f2ee', '#e9e6e0', '#d8d4cc'], z);
+    poly(x, wallQuad(0.6, 1.9, 2.2, z + 8, z + 62), glass[0]); poly(x, wallQuad(2.3, 3.2, 2.2, z + 8, z + 62), glass[0]);
+    poly(x, wallQuadB(0.6, 1.9, 3.5, z + 10, z + 60), glass[1]);
+    box(x, 0.2, 0.2, 3.4, 2.1, 6, ['#3a3d45', '#2a2c33', '#1d1f25'], z + 72);
+    box(x, 0.8, 0.4, 2.2, 1.5, 52, ['#f4f2ee', '#e9e6e0', '#d8d4cc'], z + 78);
+    poly(x, wallQuad(1.0, 2.8, 1.9, z + 86, z + 122), glass[0]);
+    box(x, 0.7, 0.3, 2.4, 1.7, 6, ['#3a3d45', '#2a2c33', '#1d1f25'], z + 130);
+    if (night) { const [wx, wy] = P(1.6, 2.2, z + 35); glo(x, wx, wy, 120, '#ffcf70', 0.35); }
+    if (has('palmen')) { palm(x, 5.5, 0.5, 1); palm(x, 4.3, 0.4, 0.8); }
+    if (has('lichter')) for (let k = 0; k < 5; k++) { const [lx, ly] = P(2.0, 2.4 + k * 0.55, 16); box(x, 2.0, 2.4 + k * 0.55, 0.08, 0.08, 14, ['#2a2c33', '#1d1f25', '#141518'], 16); glo(x, lx, ly - 16, night ? 26 : 12, '#ffd98a', night ? 0.7 : 0.4); }
+    if (has('grill')) { box(x, 0.5, 3.0, 0.5, 0.35, 26, ['#3a3d45', '#2a2c33', '#1d1f25'], z); const [gx, gy] = P(0.75, 3.15, z + 28); x.strokeStyle = 'rgba(200,200,200,0.5)'; x.lineWidth = 3; x.beginPath(); x.moveTo(gx, gy); x.quadraticCurveTo(gx + 8, gy - 14 - Math.sin(t * 2) * 3, gx - 2, gy - 28); x.stroke(); }
+    if (has('lounge')) { rug(x, 0.6, 3.6, 1.4, 1.1, '#e8dfcf', z); box(x, 0.7, 3.7, 1.2, 0.45, 14, C.sofa, z); box(x, 0.7, 3.7, 1.2, 0.15, 26, C.sofa, z); }
+    drawWalker(x, 'v', t);
+    if (has('liegen')) for (const jj of [4.65, 4.65]) { box(x, 3.9, jj, 0.8, 0.3, 6, C.white, z); box(x, 4.9, jj, 0.8, 0.3, 6, C.white, z); break; }
+  }
+
   window.Buero = {
-    stageFor: (L) => L >= 15 ? 3 : L >= 5 ? 2 : 1,
+    stageFor: (L) => L >= 8 ? 3 : L >= 5 ? 2 : 1,
     names: { 1: 'Das Start-Loft', 2: 'Das eigene Büro', 3: 'Das Maisonette-Penthouse' },
     who: WHO,
     setWho(w) { CUR = w === 'm' ? 'm' : 'w'; },
     // Raum mit laufender Figur
-    room(x, W, H_, stage, t, night, owned, pop) {
-      OWN = new Set(owned || []); POP = pop ? { ...pop, now: performance.now() } : null;
+    room(x, W, H_, stage, t, night, owned, pop, ideas) {
+      OWN = new Set(owned || []); POP = pop ? { ...pop, now: performance.now() } : null; IDEAS = ideas || 0;
       x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, x.canvas.width, x.canvas.height); x.restore();
       x.save(); const k = x.canvas.width / W; x.scale(k, k);
       const g = x.createLinearGradient(0, 0, 0, H_);
@@ -373,6 +472,18 @@
       ISO.oy = 330; x.save(); fit(x, W, H_, stage);
       const keep = cam; cam = () => {}; // Szene ohne eigene Kamera zeichnen
       try { sceneBody(x, stage, t, night); } finally { cam = keep; }
+      x.restore(); x.restore();
+    },
+    place(x, W, H_, where, t, night, owned) {
+      x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, x.canvas.width, x.canvas.height); x.restore();
+      x.save(); const k = x.canvas.width / W; x.scale(k, k);
+      const g = x.createLinearGradient(0, 0, 0, H_);
+      if (where === 'villa' && !night) { g.addColorStop(0, '#bfe6ff'); g.addColorStop(1, '#eaf6ff'); }
+      else if (night) { g.addColorStop(0, '#171a33'); g.addColorStop(1, '#2b2f55'); } else { g.addColorStop(0, '#f2f3f5'); g.addColorStop(1, '#e3e5e9'); }
+      x.fillStyle = g; x.fillRect(0, 0, W, H_);
+      ISO.oy = 330; x.save(); fit(x, W, H_, where === 'villa' ? 3 : 2);
+      const own = new Set(owned || []);
+      if (where === 'garage') garageBody(x, t, night, own); else villaBody(x, t, night, own);
       x.restore(); x.restore();
     },
     // einzelne Figur (Morgen-Bildschirm, Level-up)
