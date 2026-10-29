@@ -207,6 +207,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 @keyframes b-slap{0%,100%{transform:none}25%{transform:translateY(-8%) scale(.97,1.04)}35%{transform:translateY(0) scale(1.08,.9)}45%{transform:scale(.98,1.02)}55%{transform:none}}
 .scene.shake{animation:shake .35s linear}
 @keyframes shake{0%,100%{transform:none}20%{transform:translate(-3px,1px)}40%{transform:translate(3px,-1px)}60%{transform:translate(-2px,1px)}80%{transform:translate(2px,0)}}
+.m-gag-juggle{animation:b-in .35s cubic-bezier(.2,1.6,.4,1) both,b-juggle .8s ease-in-out .35s infinite}
+@keyframes b-juggle{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-4%) rotate(2deg)}}
 .chip{animation:chip .9s ease-out forwards}
 @keyframes chip{from{transform:translate(0,0) rotate(0);opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--rot));opacity:0}}
 .save{font-size:.8rem;color:var(--muted);text-align:center}
@@ -759,7 +761,7 @@ const GAGS=[
  {img:"nagen",say:["Mmh, Eiche. Meine Lieblingssorte!","Kurze Snackpause. Bauen macht hungrig.","Knusper, knusper …"],chips:true,dur:5000},
  {img:"gaehnen",say:["*Gääähn* … sag Bescheid, wenn's weitergeht.","*Streeeck* … so, wieder wach!","Puh, ich brauch gleich einen Kaffee."],dur:4500,anim:"m-gag-stretch"},
  {img:"klatschen",say:["*Platsch!* So rufen Biber ihre Freunde.","Schwanzklatscher! Hast du's gehört?","*Klatsch!* Aufwachen, es gibt was zu bauen!"],dur:4000,anim:"m-gag-slap",shake:true},
- {img:"jonglieren",say:["Hammer, Säge, Hobel … guck mal!","Ich übe für den Feierabend."],dur:4500},
+ {img:"jonglieren",say:["Hammer, Säge, Hobel … guck mal!","Ich übe für den Feierabend.","Nicht nachmachen. Ich bin Profi!"],dur:4500,anim:"m-gag-juggle"},
  {img:"nachdenken",say:["Ich hab da eine Idee: Wie wär's mit deinem nächsten Schritt?","Kleiner Tipp: 15 Minuten reichen für heute.","Was wäre der kleinste Schritt, den du jetzt machen kannst?"],dur:5000,calm:true},
  {img:"daumen",say:["Ich glaub an dich!","Du bist weiter, als du denkst.","Jeder Meister hat mal klein angefangen."],dur:3500,calm:true},
  {img:"schlafen",say:["Zzz … *schnarch* … Bretter … Zzz"],dur:4000,calm:true}];
