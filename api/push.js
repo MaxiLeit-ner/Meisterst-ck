@@ -1,4 +1,4 @@
-// Wird alle 15 Minuten von Supabase aufgerufen und verschickt fällige Erinnerungen.
+// Wird jede Minute von Supabase aufgerufen und verschickt fällige Erinnerungen.
 const webpush = require("web-push");
 const { createClient } = require("@supabase/supabase-js");
 
@@ -11,7 +11,7 @@ const MSG = [
 function slot(tz) {
   const p = new Intl.DateTimeFormat("de-DE", { timeZone: tz || "Europe/Berlin", hour: "2-digit", minute: "2-digit", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit" })
     .formatToParts(new Date()).reduce((o, x) => ((o[x.type] = x.value), o), {});
-  const m = Math.floor(+p.minute / 15) * 15;
+  const m = +p.minute;
   return { time: p.hour + ":" + String(m).padStart(2, "0"), day: `${p.year}-${p.month}-${p.day}` };
 }
 

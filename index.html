@@ -227,9 +227,9 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
     <h2 class="sh2">Erinnerungen</h2>
     <div class="srow"><div><b>Push-Nachrichten</b><small id="pushInfo">Dreimal am Tag an dein Ziel erinnert werden</small></div><label class="sw"><input type="checkbox" id="swPush"><i></i></label></div>
     <div class="ptimes" id="pTimes" hidden>
-      <label>Morgen-Manifest<input type="time" id="pt0" value="08:00" step="900"></label>
-      <label>Mittags-Check<input type="time" id="pt1" value="13:00" step="900"></label>
-      <label>Abend-Check-in<input type="time" id="pt2" value="20:00" step="900"></label>
+      <label>Morgen-Manifest<input type="time" id="pt0" value="08:00"></label>
+      <label>Mittags-Check<input type="time" id="pt1" value="13:00"></label>
+      <label>Abend-Check-in<input type="time" id="pt2" value="20:00"></label>
       <button class="mini" id="pSave">Zeiten speichern</button>
     </div>
     <h2 class="sh2">Meine Bausteine</h2>
@@ -586,7 +586,7 @@ function makePlan(id){const i=S.ideas.find(x=>x.id===id);if(!i)return;if(i.plan)
 render();
 // Push-Erinnerungen
 const VAPID="BIh1B3FvlKG_6A9tKOZ5lGY4UaQB3MhYj4eFjFGP1ISLm2E6dxpK18K61p5UDmSti0j7xoYgAItGlToAhoPas8M";let curUser=null;
-const q15=t=>{const [h,m]=t.split(":").map(Number);return String(h).padStart(2,"0")+":"+String(Math.floor(m/15)*15).padStart(2,"0")};
+const q15=t=>{const [h,m]=t.split(":").map(Number);return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")};
 function b64u(x){const p="=".repeat((4-x.length%4)%4),r=atob((x+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(r,c=>c.charCodeAt(0))}
 async function pushState(){const ok="PushManager" in window&&"serviceWorker" in navigator&&"Notification" in window;
   if(!ok){$("swPush").disabled=true;$("pushInfo").textContent="Lege die App auf den Home-Bildschirm, dann gehen Push-Nachrichten.";return}
