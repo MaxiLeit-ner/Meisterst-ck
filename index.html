@@ -7,13 +7,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Meisterstück">
+<meta name="apple-mobile-web-app-title" content="Aufstieg">
 <link rel="manifest" href="manifest.json">
 <script src="buero.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<title>Meisterstück</title>
+<title>Aufstieg</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
 <style>
 /* Layout: eine Spalte wie ein Werkstattbrett – oben der heutige Schritt, darunter Zollstock, Plan, Ideen, Ziel */
@@ -227,6 +227,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 .fcode span{color:var(--muted);font-size:.85rem}.fcode b{font-family:var(--display);font-size:1.5rem;letter-spacing:.12em;flex:1;font-variant-numeric:tabular-nums}
 .flist{margin-top:10px}.flist .t small{display:block;color:var(--muted)}.fav{width:36px;height:36px;flex:0 0 36px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;background:#ff7a59}.fav.m{background:#3d6be0}
 .tag.ok{background:var(--green);color:var(--bg)}.fhint{color:var(--muted);font-size:.9rem}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand>div{min-width:0}#logo{width:48px;height:48px;flex:0 0 48px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+@media (max-width:440px){#logo{width:40px;height:40px;flex-basis:40px}.brand{gap:8px}}
 .office canvas{display:block;width:100%;height:auto}
 .who{display:flex;gap:8px}.who button{flex:1;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}.who button.on{background:var(--green);color:var(--bg);border-color:var(--green)}
 .scene{position:relative;background:linear-gradient(var(--sky),var(--surface));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
@@ -306,7 +308,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 </div>
 <div class="sett" id="authBox" hidden>
   <div class="mwrap">
-    <h1>Meisterstück</h1>
+    <h1>Aufstieg</h1>
     <div class="tip">Mit Konto sind deine Ziele sicher gespeichert, auch wenn du dein Handy wechselst.</div>
     <form class="ck" id="authForm">
       <h2 class="sh2" id="authTitle">Anmelden</h2>
@@ -354,7 +356,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 </div>
 <div class="wrap">
   <header>
-    <div><h1>Meisterstück</h1><div class="date" id="date"></div></div>
+    <div class="brand"><canvas id="logo" width="96" height="96" role="img" aria-label="Logo: Je mehr du schaffst, desto mehr Fenster leuchten"></canvas><div><h1>Aufstieg</h1><div class="date" id="date"></div></div></div>
     <div class="hr"><div class="streak"><b id="streak">0</b><span>Tage am Stück</span></div><button class="gear" id="gear" aria-label="Einstellungen">⚙︎</button></div>
   </header>
 
@@ -605,6 +607,7 @@ function renderReview(){const now=new Date();now.setHours(0,0,0,0);const a=bound
   document.querySelectorAll("[data-per]").forEach(b=>b.classList.toggle("on",b.dataset.per===per))}
 document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{per=b.dataset.per;renderReview()});
 function render(){
+  try{const c0=stats();drawLogo(c0.rest/c0.need)}catch(e){}
   try{renderFriends()}catch(e){}
   try{renderRoutines()}catch(e){}
   try{renderShop()}catch(e){}
@@ -617,7 +620,7 @@ function render(){
   const onb=!S.vision;
   $("morning").hidden=onb||!(S.morningOn!==false && !todayMan);
   if($("intro").hidden===onb){$("intro").hidden=!onb;if(onb)renderIntro()}
-  if(onb){$("mLbl").textContent="Willkommen bei Meisterstück";$("mVision").textContent="Was willst du in deinem Leben erreichen?";
+  if(onb){$("mLbl").textContent="Willkommen bei Aufstieg";$("mVision").textContent="Was willst du in deinem Leben erreichen?";
     $("mQ").textContent="Schreib dein großes Ziel auf. Du kannst es jederzeit ändern.";$("manIn").placeholder="z. B. Eigene Firma gründen, 10 kg abnehmen, ein Haus bauen";$("manOk").textContent="Los geht's";$("mCount").textContent="";}
   else if(!$("morning").hidden){$("mLbl").textContent="Guten Morgen · bevor es losgeht";$("mQ").textContent="Was manifestierst du heute?";$("manIn").placeholder="z. B. Ich ziehe heute meinen Schritt durch.";$("manOk").textContent="Festhalten";$("mVision").textContent=S.vision;
     $("mCount").textContent=S.man.length?`Du hast schon an ${S.man.length} Tagen manifestiert.`:"Dein erster Tag. Ein Satz reicht.";}
@@ -743,7 +746,7 @@ const URLS={};let urlBusy=false;
 function picUrl(path){if(URLS[path])return URLS[path];fetchUrls();return "data:image/gif;base64,R0lGODlhAQABAAAAACw="}
 async function fetchUrls(){if(urlBusy||!SB)return;const need=(S.pics||[]).map(p=>p.asset).filter(a=>!URLS[a]);if(!need.length)return;urlBusy=true;
   try{const {data}=await SB.storage.from("bilder").createSignedUrls(need,60*60*24*7);(data||[]).forEach(d=>{if(d.signedUrl)URLS[d.path]=d.signedUrl});render()}catch(e){}urlBusy=false}
-function ctx(){const g=goal();return `Sei mein warmherziger, direkter Coach. Ich nutze die App "Meisterstück", die mir hilft, meine Ziele Schritt für Schritt durchzuziehen, ohne mich zu überfordern. Antworte auf Deutsch, kurz (max. 6 Sätze), konkret und ermutigend. Schlage eher kleine 15–30-Minuten-Schritte vor.\nMein Stand:
+function ctx(){const g=goal();return `Sei mein warmherziger, direkter Coach. Ich nutze die App "Aufstieg", die mir hilft, meine Ziele Schritt für Schritt durchzuziehen, ohne mich zu überfordern. Antworte auf Deutsch, kurz (max. 6 Sätze), konkret und ermutigend. Schlage eher kleine 15–30-Minuten-Schritte vor.\nMein Stand:
 Mein großes Ziel: ${S.vision}
 Aktueller Fokus: ${g?g.title:"keiner"}
 Geplante Schritte: ${g&&g.steps.length?g.steps.map(x=>x.text).join("; "):"keine"}
@@ -802,7 +805,7 @@ async function pushSave(sub){const times=[0,1,2].map(i=>q15($("pt"+i).value||["0
   const {error}=await SB.from("push_subs").upsert({endpoint:sub.endpoint,user_id:curUser.id,sub:sub.toJSON(),times,tz:Intl.DateTimeFormat().resolvedOptions().timeZone});
   if(error)throw error;toast("Erinnerungen gespeichert")}
 $("swPush").onchange=async e=>{const reg=await navigator.serviceWorker.ready;
-  if(e.target.checked){try{const perm=await Notification.requestPermission();if(perm!=="granted"){e.target.checked=false;$("pushInfo").textContent="Mitteilungen sind blockiert. Erlaube sie in den iPhone-Einstellungen unter Meisterstück.";return}
+  if(e.target.checked){try{const perm=await Notification.requestPermission();if(perm!=="granted"){e.target.checked=false;$("pushInfo").textContent="Mitteilungen sind blockiert. Erlaube sie in den iPhone-Einstellungen unter Aufstieg.";return}
       const sub=(await reg.pushManager.getSubscription())||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
       await pushSave(sub);$("pTimes").hidden=false}catch(err){e.target.checked=false;toast("Push konnte nicht eingerichtet werden. Versuch es nochmal.")}}
   else{const sub=await reg.pushManager.getSubscription();if(sub){await SB.from("push_subs").delete().eq("endpoint",sub.endpoint);await sub.unsubscribe()}$("pTimes").hidden=true;toast("Erinnerungen aus")}};
@@ -953,6 +956,23 @@ function renderFriends(){const box=$("friendsBox");if(!box)return;
   $("faForm").onsubmit=async e=>{e.preventDefault();const c=$("faIn").value.trim().toUpperCase();if(c.length!==6){toast("Der Code hat 6 Zeichen.");return}
     const {data,error}=await SB.rpc("add_friend",{c});if(error){toast("Das hat nicht geklappt. Versuch es nochmal.");return}
     toast(data==="ok"?"Freund hinzugefügt!":data==="selbst"?"Das ist dein eigener Code.":"Diesen Code gibt es nicht.");if(data==="ok"){$("faIn").value="";loadFriends()}}}
+// Logo im Kopf: Skyline mit Penthouse. Je mehr XP im aktuellen Level, desto mehr Fenster leuchten.
+var LOGO_ORDER=null,LOGO_LAST=-1;
+function drawLogo(frac){const c=$("logo");if(!c)return;const x=c.getContext("2d"),S=96;
+  const g=x.createLinearGradient(0,0,0,S);g.addColorStop(0,"#121634");g.addColorStop(.5,"#2e2860");g.addColorStop(.8,"#be6973");g.addColorStop(1,"#ff9664");
+  x.fillStyle=g;x.beginPath();x.roundRect?x.roundRect(0,0,S,S,22):x.rect(0,0,S,S);x.fill();x.save();x.clip();
+  x.fillStyle="#2e3462";[[4,11,31],[16,10,39],[66,11,36],[78,13,28],[53,8,24]].forEach(([a,w,h])=>x.fillRect(a,S-h,w,h));
+  const t0=34,t1=62,top=28;x.fillStyle="#1e2246";x.fillRect(t0,top,t1-t0,S-top);x.fillStyle="#161936";x.fillRect(t1-6,top,6,S-top);
+  const win=[];for(let r=0;r<6;r++)for(let k=0;k<3;k++)win.push([t0+3+k*7.6,top+6+r*10.5]);
+  if(!LOGO_ORDER){const rr=H.rng(9);LOGO_ORDER=win.map((_,i)=>i);for(let i=LOGO_ORDER.length-1;i>0;i--){const j=Math.floor(rr()*(i+1));[LOGO_ORDER[i],LOGO_ORDER[j]]=[LOGO_ORDER[j],LOGO_ORDER[i]]}}
+  const lit=Math.round(frac*win.length),on=new Set(LOGO_ORDER.slice(0,lit));
+  win.forEach(([wx,wy],i)=>{x.fillStyle=on.has(i)?"#ffd98a":"#3a4076";x.fillRect(wx,wy,5,6);if(on.has(i)){x.fillStyle="rgba(255,217,138,.25)";x.fillRect(wx-1.5,wy-1.5,8,9)}});
+  const gl=x.createRadialGradient(48,18,2,48,18,24);gl.addColorStop(0,"rgba(255,210,63,.55)");gl.addColorStop(1,"rgba(255,210,63,0)");x.fillStyle=gl;x.fillRect(20,0,56,44);
+  x.fillStyle="#f0f0f5";x.fillRect(t0-3,top-1,t1-t0+6,3);x.fillStyle="#24493b";x.fillRect(t0+2,top-15,t1-t0-4,14);x.fillStyle="#ffd23f";x.fillRect(t0+4,top-13,t1-t0-8,10);
+  x.fillStyle="#24493b";for(let k=1;k<3;k++)x.fillRect(t0+4+k*(t1-t0-8)/3-0.5,top-13,1.2,10);x.fillStyle="#f0f0f5";x.fillRect(t0+1,top-17,t1-t0-2,2.5);
+  x.fillStyle="#ffec96";x.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,rr2=k%2?2.2:5;x.lineTo(48+Math.cos(a)*rr2,8+Math.sin(a)*rr2)}x.fill();x.restore();
+  // Browser-Tab-Symbol mitziehen
+  if(lit!==LOGO_LAST){LOGO_LAST=lit;try{let l=document.querySelector('link[rel="icon"]');l.href=c.toDataURL("image/png")}catch(e){}}}
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>

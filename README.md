@@ -1,4 +1,4 @@
-# Meisterstück
+# Aufstieg
 
 Eine App, die Menschen hilft, ihre Ziele Schritt für Schritt durchzuziehen. Mit Morgen-Manifest, einem kleinen Schritt pro Tag, Ideen-Pinnwand, Abend-Check-in, Level und Belohnungen.
 
