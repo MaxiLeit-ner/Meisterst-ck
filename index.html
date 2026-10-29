@@ -256,12 +256,6 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 
   <section data-block="char" class="char" id="char"></section>
 
-  <section data-block="build">
-    <h2 id="buildH">Werkstück</h2>
-    <div class="scene"><svg id="scene" viewBox="0 0 320 210" role="img" aria-label="Möbelstück, das mit jedem Schritt wächst"></svg></div>
-    <div class="rcap"><span id="buildCap"></span><span id="buildNum"></span></div>
-  </section>
-
   <section data-block="today" class="today" id="today" aria-live="polite"></section>
 
   <section data-block="ruler">
@@ -334,7 +328,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   </section>
   <div class="save" id="save"></div>
   <div class="toast" id="toast" role="status" hidden></div>
-  <div class="lvlup" id="lvlup" hidden><div class="lvbox"><div class="ttl">Level up!</div><b id="lvNum"></b><div id="lvTxt"></div><button class="big" id="lvOk">Weiter geht's</button></div></div>
+  <div class="lvlup" id="lvlup" hidden><div class="lvbox"><div class="ttl">Level up!</div><svg id="lvScene" viewBox="0 0 320 210" style="width:100%;height:auto;border-radius:12px;background:var(--sky)" aria-hidden="true"></svg><b id="lvNum"></b><div id="lvTxt"></div><button class="big" id="lvOk">Weiter geht's</button></div></div>
   <canvas id="confetti" aria-hidden="true"></canvas>
 </div>
 
@@ -377,7 +371,7 @@ function levelUp(L,txt){$("lvNum").textContent=L;$("lvTxt").textContent=txt;$("l
 $("lvOk").onclick=()=>{$("lvlup").hidden=true};
 let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
 let lastXp=null;
-const BLOCKS={char:"Level & Charakter",build:"Werkstück",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
+const BLOCKS={char:"Level & Charakter",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
 function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>all.includes(x.id));all.forEach(id=>{if(!L.find(x=>x.id===id))L.push({id,on:true})});S.layout=L;
   const w=document.querySelector(".wrap"),end=$("save");
   L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}})}
@@ -465,24 +459,19 @@ const FURN=[
   [7,"Rechte Tür angeschlagen",'<rect x="161" y="36" width="59" height="132" fill="#dcae7b" stroke="#9b6b43" stroke-width="2"/><rect x="169" y="46" width="43" height="112" fill="none" stroke="#9b6b43" stroke-width="1.5" opacity=".6"/>'],
   [8,"Griffe montiert",'<rect x="150" y="92" width="4" height="22" rx="2" fill="#24493b"/><rect x="166" y="92" width="4" height="22" rx="2" fill="#24493b"/>'],
   [9,"Meisterstück fertig",'<rect x="82" y="22" width="156" height="3" fill="#f2c230"/><circle cx="160" cy="14" r="4" fill="#f2c230"/>']]}];
-const TOTAL=FURN.reduce((a,f)=>a+f.parts.length,0);
-let lastBuilt=0;
-function renderBuild(){const n=S.log.length,round=Math.floor(n/TOTAL);let r=n%TOTAL,fi=0;
-  while(fi<FURN.length&&r>=FURN[fi].parts.length&&!(r===FURN[fi].parts.length&&fi===FURN.length-1)){r-=FURN[fi].parts.length;fi++}
-  if(fi>=FURN.length){fi=FURN.length-1;r=FURN[fi].parts.length}
-  let F=FURN[fi],count=r,justDone=false;
-  if(count===0&&n>0){fi=(fi+FURN.length-1)%FURN.length;F=FURN[fi];count=F.parts.length;justDone=true}
-  const key=fi+":"+count,anim=lastBuilt!==key;
+let lastBuilt=null;
+function renderBuild(C){const fi=(C.L-1)%FURN.length,F=FURN[fi],n=F.parts.length,count=Math.min(n-1,Math.floor(C.rest/C.need*n));
+  const key=C.L+":"+count,first=lastBuilt===null,anim=lastBuilt!==key;
   const last=F.parts.find(p=>p[0]===count);
-  $("buildH").textContent="Werkstück: "+F.name+(round>0?" · Runde "+(round+1):"");
   $("scene").innerHTML='<rect x="0" y="180" width="320" height="30" fill="#b98a5e"/><path d="M0 180 h320 M0 195 h320" stroke="#9b6b43" stroke-width="1.5"/>'+
-    F.parts.filter(p=>p[0]<=count).map(p=>`<g class="part ${anim&&(lastBuilt===0||p[0]===count)?"new":""}" style="animation-delay:${anim&&lastBuilt===0?(p[0]-1)*0.15:0}s">${p[2]}</g>`).join("")+
-    (!count?'<text x="160" y="110" text-anchor="middle" font-size="12" fill="#5f6b65">Dein erster Schritt sägt das erste Bauteil zu</text>':"");
-  $("buildCap").innerHTML=count?`<b>${esc(last[1])}</b>`:"Bereit zum Bauen";
-  $("buildNum").textContent=justDone?F.name+" fertig! Nächstes Möbelstück wartet":`Bauteil ${count} von ${F.parts.length}`;
+    F.parts.filter(p=>p[0]<=count).map(p=>`<g class="part ${anim&&(first||p[0]===count)?"new":""}" style="animation-delay:${first?(p[0]-1)*0.15:0}s">${p[2]}</g>`).join("")+
+    F.parts.filter(p=>p[0]===count+1).map(p=>`<g opacity=".18">${p[2]}</g>`).join("")+
+    (!count?`<text x="160" y="60" text-anchor="middle" font-size="12" fill="#5f6b65">Sammle XP, dann entsteht dein ${F.name}</text>`:"");
+  $("buildCap").innerHTML=`<b>${F.name}</b>${count?" · "+esc(last[1]):""}`;
+  $("buildNum").textContent=`Bauteil ${count} von ${n}`;
   lastBuilt=key}
 function render(){
-  layout();renderBuild();
+  layout();
   $("date").textContent=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
   $("streak").textContent=streak();
   S.man=S.man||[];
@@ -518,11 +507,15 @@ function render(){
   // Charakter
   const C=stats(),title=TITLES.filter(t=>t[0]<=C.L).pop()[1],RW=rewards(),nx=RW.find(u=>u.lvl>C.L),ready=RW.filter(u=>u.lvl<=C.L&&!u.done);
   $("char").innerHTML=`<div class="chead"><div><div class="ttl">${title}</div><div class="lvl">Level ${C.L}</div></div><div class="xpcap">${C.xp} XP gesamt</div></div>
+   <div class="scene"><svg id="scene" viewBox="0 0 320 210" role="img" aria-label="Möbelstück, das mit deinen XP entsteht"></svg></div>
+   <div class="rcap"><span id="buildCap"></span><span id="buildNum"></span></div>
    <div><div class="xpbar"><i style="width:${C.rest/C.need*100}%"></i></div><div class="xpcap">${C.rest} / ${C.need} XP bis Level ${C.L+1}</div></div>
    <div class="stats"><div class="stat">Disziplin<b>${C.st}</b></div><div class="stat">Klarheit<b>${C.man}</b></div><div class="stat">Reflexion<b>${C.ck}</b></div><div class="stat">Kreativität<b>${C.id}</b></div></div>
    <div class="unl">${ready.length?"Verdient und bereit: <b>"+ready.map(u=>esc(u.text)).join(", ")+"</b><br>":""}${nx?`Nächste Belohnung bei Level ${nx.lvl}: <b>${esc(nx.text)}</b>`:"Leg dir unten die nächste Belohnung fest."}</div>`;
+  renderBuild(C);
   if(lastXp!==null&&C.xp>lastXp){const pL=S.lvl||1;
-    if(C.L>pL){const u=RW.filter(x=>x.lvl>pL&&x.lvl<=C.L);levelUp(C.L,`Du bist jetzt ${title}.${u.length?" Belohnung verdient: "+u.map(x=>x.text).join(", ")+". Gönn sie dir!":""}`)}else toast(`+${C.xp-lastXp} XP`)}
+    if(C.L>pL){const u=RW.filter(x=>x.lvl>pL&&x.lvl<=C.L);const Fd=FURN[(C.L-2)%FURN.length];$("lvScene").innerHTML='<rect x="0" y="180" width="320" height="30" fill="#b98a5e"/>'+Fd.parts.map(p=>`<g class="part new" style="animation-delay:${p[0]*0.08}s">${p[2]}</g>`).join("");
+      levelUp(C.L,`${Fd.name} fertig gebaut! Du bist jetzt ${title}.${u.length?" Belohnung verdient: "+u.map(x=>x.text).join(", ")+". Gönn sie dir!":""}`)}else toast(`+${C.xp-lastXp} XP`)}
   S.lvl=C.L;lastXp=C.xp;
   $("rewards").innerHTML=RW.length?RW.map(r=>{const ok=r.lvl<=C.L;return `<li class="${r.done?"rdone":ok?"":"rlocked"}"><span class="rlv">Lvl ${r.lvl}</span><span class="t">${esc(r.text)}</span>${r.done?'<span class="tag">Eingelöst</span>':ok?`<button class="mini" data-redeem="${r.id}">Einlösen</button>`:'<span class="tag">Gesperrt</span>'}<button class="x" data-rdel="${r.id}" aria-label="Belohnung löschen">×</button></li>`}).join(""):`<li class="empty">Was gönnst du dir, wenn du ein Level erreichst?</li>`;
   // Bilder
