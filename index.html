@@ -19,15 +19,16 @@
 :root{
   --bg:#eef1ee; --surface:#ffffff; --ink:#1d2622; --muted:#5f6b65; --line:#d6ddd8;
   --green:#24493b; --ruler:#f2c230; --ruler-ink:#2a2510; --ok:#2f7a4f;
+  --board:#d9c7a6;--board-dot:#c4ae88;--paper:#fbfaf6;
   --display:"Barlow Condensed","Arial Narrow",sans-serif;
   --body:"Figtree",system-ui,-apple-system,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#121815; --surface:#1b2420; --ink:#e7ece9; --muted:#9aa8a1; --line:#2c3833;
-  --green:#7fc0a2; --ruler:#e8b923; --ruler-ink:#231e08; --ok:#6fcf97; color-scheme:dark}}
+  --green:#7fc0a2; --ruler:#e8b923; --ruler-ink:#231e08; --ok:#6fcf97; --board:#3a3226; --board-dot:#4d4333; --paper:#efece4; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121815; --surface:#1b2420; --ink:#e7ece9; --muted:#9aa8a1; --line:#2c3833;
-  --green:#7fc0a2; --ruler:#e8b923; --ruler-ink:#231e08; --ok:#6fcf97; color-scheme:dark}
+  --green:#7fc0a2; --ruler:#e8b923; --ruler-ink:#231e08; --ok:#6fcf97; --board:#3a3226; --board-dot:#4d4333; --paper:#efece4; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
@@ -102,14 +103,20 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
 .bp h4{margin:0 0 4px;font-size:.95rem}
 .bp ol,.bp .ul2{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:3px;font-size:.95rem}
 .bp .first{background:var(--ruler);color:var(--ruler-ink);border-radius:10px;padding:10px 12px;font-weight:600}
-.gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.pic{position:relative;border-radius:12px;overflow:hidden;background:var(--line);aspect-ratio:4/5;max-width:100%}
-.pic img{width:100%;height:100%;object-fit:cover;display:block}
-.pic .cap{position:absolute;inset:auto 0 0 0;padding:28px 10px 8px;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;font-size:.88rem;font-weight:600;line-height:1.3}
-.pic .cap small{display:block;font-weight:400;opacity:.85}
-.pic .x{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.45);color:#fff;border-radius:50%;width:32px;height:32px;padding:0}
-.pic .mv{position:absolute;top:6px;left:6px;font-size:.75rem;padding:5px 9px}
-.addpic{aspect-ratio:4/5;border:2px dashed var(--line);background:transparent;color:var(--muted);border-radius:12px;font-weight:600;max-width:100%}
+.gal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px;padding:18px 12px;border-radius:14px;
+  background:var(--board);background-image:radial-gradient(var(--board-dot) 1px,transparent 1.2px);background-size:9px 9px}
+.pic{position:relative;background:var(--paper);padding:8px 8px 0;border-radius:3px;box-shadow:0 6px 14px rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.2);max-width:100%;transform:rotate(var(--r,0deg));transition:transform .25s}
+.pic:nth-child(3n+1){--r:-2.2deg}.pic:nth-child(3n+2){--r:1.6deg}.pic:nth-child(3n){--r:-.8deg}
+.pic:active{transform:rotate(0) scale(1.02)}
+.pic::before{content:"";position:absolute;top:-7px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;z-index:2;
+  background:radial-gradient(circle at 35% 35%,#ffe9a0,var(--ruler) 45%,#a87d00);box-shadow:0 3px 4px rgba(0,0,0,.35)}
+.pic img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--line)}
+.pic .cap{padding:8px 2px 10px;color:#22231f;font-size:.88rem;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.pic .cap small{display:block;font-weight:500;color:var(--ok);font-size:.75rem}
+.pic .x{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.5);color:#fff;border-radius:50%;width:30px;height:30px;padding:0}
+.pic .mv{position:absolute;top:12px;left:12px;font-size:.75rem;padding:5px 9px}
+.win-stamp{position:absolute;top:22%;left:50%;transform:translateX(-50%) rotate(-12deg);border:3px solid var(--ok);color:var(--ok);background:rgba(255,255,255,.85);font-family:var(--display);font-size:1.1rem;letter-spacing:.08em;padding:2px 10px;border-radius:6px;text-transform:uppercase}
+.addpic{aspect-ratio:4/5;border:2px dashed var(--board-dot);background:rgba(255,255,255,.25);color:var(--ink);border-radius:12px;font-weight:600;max-width:100%}
 .picf{display:flex;flex-direction:column;gap:8px;margin-top:14px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px}
 .picf img{max-height:240px;border-radius:10px;object-fit:cover;width:100%}
 .hr{display:flex;gap:10px;align-items:flex-start}
@@ -150,6 +157,15 @@ li .n{font-family:var(--display);color:var(--muted);width:1.6em;font-variant-num
 #askIn{margin:8px 0}
 a.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;padding:12px 16px;font-weight:600;text-decoration:none}
 .aibtn{background:var(--green);color:var(--bg);flex:1;min-width:6.5em}
+.lvlup{position:fixed;inset:0;z-index:40;background:rgba(10,20,15,.55);display:flex;align-items:center;justify-content:center;padding:24px}
+.lvbox{background:var(--surface);border-radius:20px;padding:28px 24px;text-align:center;max-width:340px;width:100%;display:flex;flex-direction:column;gap:10px;animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+.lvbox b{font-family:var(--display);font-size:4.5rem;line-height:1;color:var(--green)}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:45}
+.xpfly{position:fixed;z-index:46;font-family:var(--display);font-size:1.6rem;color:var(--ruler);text-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;animation:fly 1.1s ease-out forwards}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes fly{from{transform:translateY(0);opacity:1}to{transform:translateY(-70px);opacity:0}}
+.today.flash{animation:flash .6s}@keyframes flash{50%{transform:scale(1.02)}}
+@media (prefers-reduced-motion:reduce){.lvbox,.xpfly,.today.flash{animation:none}.pic{transform:none}}
 .save{font-size:.8rem;color:var(--muted);text-align:center}
 .morning{position:fixed;inset:0;z-index:20;background:var(--green);color:var(--bg);overflow:auto;
   padding:calc(env(safe-area-inset-top,0px) + 32px) max(20px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 32px) max(20px,env(safe-area-inset-left,0px))}
@@ -293,6 +309,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   </section>
   <div class="save" id="save"></div>
   <div class="toast" id="toast" role="status" hidden></div>
+  <div class="lvlup" id="lvlup" hidden><div class="lvbox"><div class="ttl">Level up!</div><b id="lvNum"></b><div id="lvTxt"></div><button class="big" id="lvOk">Weiter geht's</button></div></div>
+  <canvas id="confetti" aria-hidden="true"></canvas>
 </div>
 
 <script>
@@ -324,6 +342,14 @@ function stats(){const man=(S.man||[]).length,ck=(S.checks||[]).length,st=S.log.
   const days=new Set(S.log.map(l=>l.d)),perfect=(S.man||[]).filter(m=>days.has(m.d)).length;
   const wins=(S.pics||[]).filter(p=>p.kind==="win").length;const xp=st*20+man*10+ck*15+id*5+perfect*10+wins*50;let L=1,rest=xp;while(rest>=L*100){rest-=L*100;L++}
   return{xp,L,rest,need:L*100,man,ck,st,id,perfect}}
+const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function confetti(){if(calm)return;const c=$("confetti"),x=c.getContext("2d");c.width=innerWidth;c.height=innerHeight;
+  const cols=["#f2c230","#24493b","#2f7a4f","#e7ece9","#b4532a"],P=Array.from({length:110},()=>({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*12,vy:Math.random()*-12-3,s:4+Math.random()*5,c:cols[Math.random()*5|0],r:Math.random()*6}));
+  let t=0;(function f(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=.2;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});
+    if(++t<110)requestAnimationFrame(f);else x.clearRect(0,0,c.width,c.height)})()}
+function xpFly(el,txt){if(calm||!el)return;const r=el.getBoundingClientRect(),d=document.createElement("div");d.className="xpfly";d.textContent=txt;d.style.left=(r.left+r.width/2-30)+"px";d.style.top=(r.top-10)+"px";document.body.appendChild(d);setTimeout(()=>d.remove(),1200)}
+function levelUp(L,txt){$("lvNum").textContent=L;$("lvTxt").textContent=txt;$("lvlup").hidden=false;confetti();try{navigator.vibrate&&navigator.vibrate([30,40,30])}catch(e){}}
+$("lvOk").onclick=()=>{$("lvlup").hidden=true};
 let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
 let lastXp=null;
 const BLOCKS={char:"Level & Charakter",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
@@ -407,7 +433,7 @@ function render(){
     T.innerHTML=`<div class="lbl">Tagesquest · +20 XP</div><div class="goal">Fokus: ${esc(g.title)}</div>
       <div class="step">${esc(open[0].text)}</div>
       <div class="row"><button class="big" id="done">Erledigt ✓</button><button class="ghost" id="skip">Zu groß? Kleiner machen</button></div>`;
-    $("done").onclick=()=>{const s=g.steps.shift();S.log.unshift({d:day(),t:s.text,g:g.title});if(S.extra===day())S.extra=null;save()};
+    $("done").onclick=()=>{xpFly($("done"),"+20 XP");T.classList.add("flash");if(!S.log.some(l=>l.d===day()))setTimeout(confetti,150);const s=g.steps.shift();S.log.unshift({d:day(),t:s.text,g:g.title});if(S.extra===day())S.extra=null;save()};
     $("skip").onclick=()=>{$("stepIn").value="";$("stepIn").placeholder="Kleinerer Teil von: "+open[0].text.slice(0,40);$("stepIn").focus();$("stepIn").dataset.front="1"};
   }
   if(todayMan){const m=document.createElement("div");m.className="mantra";m.textContent="„"+todayMan.t+"“";T.prepend(m)}
@@ -418,12 +444,12 @@ function render(){
    <div class="stats"><div class="stat">Disziplin<b>${C.st}</b></div><div class="stat">Klarheit<b>${C.man}</b></div><div class="stat">Reflexion<b>${C.ck}</b></div><div class="stat">Kreativität<b>${C.id}</b></div></div>
    <div class="unl">${ready.length?"Verdient und bereit: <b>"+ready.map(u=>esc(u.text)).join(", ")+"</b><br>":""}${nx?`Nächste Belohnung bei Level ${nx.lvl}: <b>${esc(nx.text)}</b>`:"Leg dir unten die nächste Belohnung fest."}</div>`;
   if(lastXp!==null&&C.xp>lastXp){const pL=S.lvl||1;
-    if(C.L>pL){const u=RW.filter(x=>x.lvl>pL&&x.lvl<=C.L);toast(`Level ${C.L}!${u.length?" Belohnung verdient: "+u.map(x=>x.text).join(", "):""}`)}else toast(`+${C.xp-lastXp} XP`)}
+    if(C.L>pL){const u=RW.filter(x=>x.lvl>pL&&x.lvl<=C.L);levelUp(C.L,`Du bist jetzt ${title}.${u.length?" Belohnung verdient: "+u.map(x=>x.text).join(", ")+". Gönn sie dir!":""}`)}else toast(`+${C.xp-lastXp} XP`)}
   S.lvl=C.L;lastXp=C.xp;
   $("rewards").innerHTML=RW.length?RW.map(r=>{const ok=r.lvl<=C.L;return `<li class="${r.done?"rdone":ok?"":"rlocked"}"><span class="rlv">Lvl ${r.lvl}</span><span class="t">${esc(r.text)}</span>${r.done?'<span class="tag">Eingelöst</span>':ok?`<button class="mini" data-redeem="${r.id}">Einlösen</button>`:'<span class="tag">Gesperrt</span>'}<button class="x" data-rdel="${r.id}" aria-label="Belohnung löschen">×</button></li>`}).join(""):`<li class="empty">Was gönnst du dir, wenn du ein Level erreichst?</li>`;
   // Bilder
   S.pics=S.pics||[];
-  const pic=p=>`<div class="pic"><img src="${picUrl(p.asset)}" alt="${esc(p.cap)}" loading="lazy"><div class="cap">${esc(p.cap)}${p.kind==="win"?`<small>Geschafft am ${p.d.slice(8)}.${p.d.slice(5,7)}.${p.d.slice(0,4)}</small>`:""}</div>${p.kind==="vision"?`<button class="mini mv" data-won="${p.id}">Geschafft!</button>`:""}<button class="x" data-pdel="${p.id}" aria-label="Bild entfernen">×</button></div>`;
+  const pic=p=>`<div class="pic"><img src="${picUrl(p.asset)}" alt="${esc(p.cap)}" loading="lazy">${p.kind==="win"?'<span class="win-stamp">Geschafft</span>':""}<div class="cap">${esc(p.cap)}${p.kind==="win"?`<small>Geschafft am ${p.d.slice(8)}.${p.d.slice(5,7)}.${p.d.slice(0,4)}</small>`:""}</div>${p.kind==="vision"?`<button class="mini mv" data-won="${p.id}">Geschafft!</button>`:""}<button class="x" data-pdel="${p.id}" aria-label="Bild entfernen">×</button></div>`;
   $("galVision").innerHTML=S.pics.filter(p=>p.kind==="vision").map(pic).join("")+(assets?`<button class="addpic" data-addpic="vision">+ Ziel-Bild</button>`:"");
   $("galWin").innerHTML=S.pics.filter(p=>p.kind==="win").map(pic).join("")+(assets?`<button class="addpic" data-addpic="win">+ Erfolg</button>`:"");
   $("picNote").hidden=!!assets;
