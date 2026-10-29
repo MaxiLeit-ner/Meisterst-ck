@@ -198,6 +198,17 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 .pgname{display:block;font-size:.75rem;color:var(--muted);font-weight:500}
 .toast{bottom:calc(env(safe-area-inset-bottom,0px) + 86px)!important}
 @media (max-width:440px){h1{font-size:1.7rem}.streak b{font-size:1.7rem}.hr{gap:8px}header{gap:8px}header>div:first-child{min-width:0}}
+.intro .mwrap{min-height:100%;justify-content:center}
+.dots{display:flex;gap:6px;justify-content:center}.dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35)}.dots i.on{background:var(--ruler);width:22px;border-radius:4px}
+#introBody{display:flex;flex-direction:column;gap:14px}.introFig{width:150px;height:176px;align-self:center}.ip{margin:0;opacity:.9;font-size:1.05rem}
+.ilist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}.ilist li{display:block;border:0;background:rgba(255,255,255,.12);border-radius:12px;padding:12px 14px}.ilist b{display:block}.ilist span{opacity:.85;font-size:.95rem}
+.ipick{display:grid;grid-template-columns:1fr 1fr;gap:12px}.ipick button{background:rgba(255,255,255,.12);border:2px solid transparent;border-radius:16px;padding:10px;color:inherit;font:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+.ipick button.on{border-color:var(--ruler);background:rgba(255,255,255,.2)}.ipick canvas{width:100%;max-width:120px;height:auto}
+.introNav{justify-content:space-between}.introNav .link{color:inherit}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:14;width:56px;height:56px;border-radius:50%;border:0;background:var(--ruler);color:var(--ruler-ink);font-size:2rem;font-weight:700;line-height:1;box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer}
+.fab:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+.qsheet{position:fixed;inset:0;z-index:30;background:rgba(10,20,15,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.qbox{background:var(--surface);border-radius:20px;padding:18px;width:100%;max-width:520px;display:flex;flex-direction:column;gap:10px;animation:pop .3s cubic-bezier(.2,1.4,.4,1)}.qbox label{font-weight:700}
 .office canvas{display:block;width:100%;height:auto}
 .who{display:flex;gap:8px}.who button{flex:1;font:inherit;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}.who button.on{background:var(--green);color:var(--bg);border-color:var(--green)}
 .scene{position:relative;background:linear-gradient(var(--sky),var(--surface));border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
@@ -257,6 +268,13 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
 </head>
 <body>
 
+<div class="morning intro" id="intro" hidden>
+  <div class="mwrap">
+    <div class="dots" id="introDots" aria-hidden="true"></div>
+    <div id="introBody"></div>
+    <div class="row introNav"><button type="button" class="link" id="introBack">Zurück</button><button type="button" class="big" id="introNext">Weiter</button></div>
+  </div>
+</div>
 <div class="morning" id="morning" hidden>
   <div class="mwrap">
     <canvas class="mbiber" id="mFig" width="340" height="400" aria-hidden="true"></canvas>
@@ -401,6 +419,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
     <ul id="log"></ul>
   </section>
   <div class="save" id="save"></div>
+  <button type="button" class="fab" id="fab" aria-label="Idee schnell anpinnen">+</button>
+  <div class="qsheet" id="qsheet" hidden><form class="qbox" id="qform"><label for="qIn">Idee schnell anpinnen</label><textarea id="qIn" placeholder="Was ist dir gerade eingefallen?"></textarea><div class="row"><button class="big" id="qOk">Anpinnen</button><button type="button" class="link" id="qNo">Abbrechen</button></div></form></div>
   <nav class="tabbar" aria-label="Seiten"><button type="button" data-page="heute"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg><span>Heute</span></button><button type="button" data-page="reich"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V9l7-5 7 5v12"/><path d="M10 21v-6h4v6"/></svg><span>Mein Reich</span></button><button type="button" data-page="ideen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg><span>Ideen</span></button><button type="button" data-page="fortschritt"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg><span>Fortschritt</span></button></nav>
 
   <div class="toast" id="toast" role="status" hidden></div>
@@ -561,7 +581,8 @@ function render(){
   S.man=S.man||[];
   const todayMan=S.man.find(m=>m.d===day());
   const onb=!S.vision;
-  $("morning").hidden=!(onb||(S.morningOn!==false && !todayMan));
+  $("morning").hidden=onb||!(S.morningOn!==false && !todayMan);
+  if($("intro").hidden===onb){$("intro").hidden=!onb;if(onb)renderIntro()}
   if(onb){$("mLbl").textContent="Willkommen bei Meisterstück";$("mVision").textContent="Was willst du in deinem Leben erreichen?";
     $("mQ").textContent="Schreib dein großes Ziel auf. Du kannst es jederzeit ändern.";$("manIn").placeholder="z. B. Eigene Firma gründen, 10 kg abnehmen, ein Haus bauen";$("manOk").textContent="Los geht's";$("mCount").textContent="";}
   else if(!$("morning").hidden){$("mLbl").textContent="Guten Morgen · bevor es losgeht";$("mQ").textContent="Was manifestierst du heute?";$("manIn").placeholder="z. B. Ich ziehe heute meinen Schritt durch.";$("manOk").textContent="Festhalten";$("mVision").textContent=S.vision;
@@ -757,7 +778,8 @@ async function startCloud(user){curUser=user;
   const {data,error}=await SB.from("app_state").select("data").eq("user_id",user.id).maybeSingle();
   if(error){$("save").textContent="Cloud gerade nicht erreichbar. Auf diesem Gerät ist alles da.";return}
   if(data&&data.data){S=data.data;S.ideas=S.ideas||[];S.log=S.log||[];S.goals=S.goals||[];lastXp=null;render();try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}$("save").textContent="Gespeichert"}
-  else save();}
+  else save();
+  applyPending();}
 let authMode="in";
 function authMsg(t){$("authMsg").textContent=t}
 $("authSwitch").onclick=()=>{authMode=authMode==="in"?"up":"in";$("authTitle").textContent=authMode==="in"?"Anmelden":"Konto erstellen";
@@ -773,11 +795,11 @@ $("authForm").onsubmit=async e=>{e.preventDefault();const email=$("authMail").va
 $("authLocal").onclick=()=>{try{localStorage.setItem("ms-local","1")}catch(e){}$("authBox").hidden=true;$("save").textContent="Nur auf diesem Gerät gespeichert."};
 $("acctLogin").onclick=()=>{$("sett").hidden=true;$("authBox").hidden=false};
 $("logout").onclick=async()=>{await SB.auth.signOut();try{localStorage.removeItem(LS);localStorage.removeItem("ms-local")}catch(e){}location.reload()};
-(async()=>{if(!SB){$("save").textContent="Nur auf diesem Gerät gespeichert.";return}
+(async()=>{if(!SB){$("save").textContent="Nur auf diesem Gerät gespeichert.";applyPending();return}
   const {data}=await SB.auth.getSession();
   if(data.session)return startCloud(data.session.user);
   let local=false;try{local=localStorage.getItem("ms-local")==="1"}catch(e){}
-  if(local){$("save").textContent="Nur auf diesem Gerät gespeichert.";$("acctLogin").hidden=false}else $("authBox").hidden=false})();
+  if(local){$("save").textContent="Nur auf diesem Gerät gespeichert.";$("acctLogin").hidden=false;applyPending()}else $("authBox").hidden=false})();
 // Büro-Animation: läuft nur, wenn etwas davon sichtbar ist
 function nightNow(){const h=new Date().getHours();return h>=19||h<6}
 function setWho(w){S.avatar=w;if(window.Buero)Buero.setWho(w);["W","M"].forEach(k=>{const b=$("who"+k);if(b){const on=(k==="M")===(w==="m");b.classList.toggle("on",on);b.setAttribute("aria-pressed",on)}})}
@@ -788,10 +810,44 @@ function frame(ms){const t=reduce?1.2:ms/1000;
   if(window.Buero){
     const oc=$("office");if(oc&&oc.isConnected&&oc.offsetParent){const r=oc.getBoundingClientRect();if(r.bottom>0&&r.top<innerHeight)((OFFICE.place||"buero")==="buero"?Buero.room(oc.getContext("2d"),600,420,OFFICE.stage,t,OFFICE.stage>=3||nightNow(),S.owned,POPBUY,(S.ideas||[]).length):Buero.place(oc.getContext("2d"),600,420,OFFICE.place,t,nightNow(),placeOwned()))}
     if(!$("morning").hidden)Buero.figure($("mFig").getContext("2d"),170,200,"wave",t);
+    if(!$("intro").hidden){const f=$("introFig");if(f)Buero.figure(f.getContext("2d"),170,200,"wave",t);
+      const pw=$("pickW"),pm=$("pickM");if(pw&&pm){const keep=S.avatar||"w";Buero.setWho("w");Buero.figure(pw.getContext("2d"),120,150,keep==="w"?"cheer":"stand",t);Buero.setWho("m");Buero.figure(pm.getContext("2d"),120,150,keep==="m"?"cheer":"stand",t);Buero.setWho(keep)}}
     if(!$("lvlup").hidden){const lc=$("lvScene").getContext("2d");Buero.room(lc,400,280,OFFICE.stage,t,OFFICE.stage>=3,S.owned,null,(S.ideas||[]).length);const k=lc.canvas.width/400;lc.save();lc.scale(k,k);lc.globalAlpha=1;lc.restore();}
   }
   if(!reduce)requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
+// Einführung für neue Nutzer: 4 Schritte, danach das große Ziel
+var INTRO=0;
+var INTRO_STEPS=[
+ {t:"Willkommen!",p:"Diese App hilft dir, deine Ziele Schritt für Schritt durchzuziehen. Jeden Tag nur ein kleiner Schritt, und plötzlich bist du weiter, als du dachtest.",fig:true},
+ {t:"So funktioniert's",list:[["Ein Schritt pro Tag","15–30 Minuten, die dich deinem Ziel näher bringen"],["Münzen verdienen","Für jeden Schritt, jedes Manifest und jeden Check-in"],["Dein Reich wächst","Vom leeren Loft bis zur Villa mit Pool"]]},
+ {t:"Wähle deine Figur",p:"Sie begleitet dich jeden Tag. Du kannst sie später in den Einstellungen ändern.",pick:true},
+ {t:"Dein großes Ziel",p:"Was willst du in deinem Leben erreichen? Ein Satz reicht. Du kannst ihn jederzeit ändern.",goal:true}];
+function renderIntro(){if(!INTRO_STEPS)return;const st=INTRO_STEPS[INTRO];
+  $("introDots").innerHTML=INTRO_STEPS.map((_,i)=>`<i class="${i===INTRO?"on":""}"></i>`).join("");
+  $("introBody").innerHTML=`${st.fig?'<canvas class="introFig" id="introFig" width="340" height="400"></canvas>':""}<div class="mvision">${st.t}</div>${st.p?`<p class="ip">${st.p}</p>`:""}
+   ${st.list?`<ul class="ilist">${st.list.map(([a,b])=>`<li><b>${a}</b><span>${b}</span></li>`).join("")}</ul>`:""}
+   ${st.pick?`<div class="ipick"><button type="button" data-ava="w" class="${(S.avatar||"w")==="w"?"on":""}"><canvas id="pickW" width="240" height="300"></canvas><b>Mia</b></button><button type="button" data-ava="m" class="${S.avatar==="m"?"on":""}"><canvas id="pickM" width="240" height="300"></canvas><b>Leon</b></button></div>`:""}
+   ${st.goal?'<label for="introGoal" class="mq">Mein großes Ziel</label><textarea id="introGoal" placeholder="z. B. Eigene Firma gründen, 10 kg abnehmen, ein Haus bauen"></textarea>':""}`;
+  $("introBack").style.visibility=INTRO?"visible":"hidden";$("introNext").textContent=st.goal?"Los geht's":"Weiter";}
+$("introBack").onclick=()=>{if(INTRO>0){INTRO--;renderIntro()}};
+$("introNext").onclick=()=>{if(INTRO<INTRO_STEPS.length-1){INTRO++;renderIntro();return}
+  const v=($("introGoal").value||"").trim();if(!v){$("introGoal").focus();return}
+  S.vision=v;S.onboarded=true;if(!S.avatar)S.avatar="w";$("intro").hidden=true;confetti();save();window.scrollTo(0,0)};
+$("introBody").addEventListener("click",e=>{const b=e.target.closest("[data-ava]");if(!b)return;setWho(b.dataset.ava);document.querySelectorAll("[data-ava]").forEach(x=>x.classList.toggle("on",x===b))});
+if(!$("intro").hidden)renderIntro();
+// Schnell-Notiz: von jeder Seite eine Idee an die Pinnwand
+$("fab").onclick=()=>{$("qsheet").hidden=false;$("qIn").value="";setTimeout(()=>$("qIn").focus(),50)};
+$("qNo").onclick=()=>{$("qsheet").hidden=true};
+$("qsheet").addEventListener("click",e=>{if(e.target.id==="qsheet")$("qsheet").hidden=true});
+$("qform").onsubmit=e=>{e.preventDefault();const v=$("qIn").value.trim();if(!v){$("qIn").focus();return}
+  S.ideaCount=(S.ideaCount||S.ideas.length)+1;S.ideas.unshift({id:uid(),text:v});$("qsheet").hidden=true;toast("Angepinnt! +5 XP");save()};
+// Aus der Push-Mitteilung "Erledigt": ersten Schritt des Fokus abhaken, sobald die Daten da sind
+var PENDING_DONE=false;try{PENDING_DONE=new URLSearchParams(location.search).get("done")==="1"}catch(e){}
+function applyPending(){if(!PENDING_DONE)return;PENDING_DONE=false;try{history.replaceState(null,"","/#heute")}catch(e){}
+  const g=goal();if(!g||!g.steps.length){toast("Kein offener Schritt mehr. Stark!");return}
+  const s0=g.steps.shift();S.log.unshift({d:day(),t:s0.text,g:g.title});showPage("heute",true);confetti();toast("Erledigt: "+s0.text+" · +20 XP");save()}
+setTimeout(()=>{let lo=false;try{lo=localStorage.getItem("ms-local")==="1"}catch(e){}if(!SB||lo)applyPending()},0);
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>

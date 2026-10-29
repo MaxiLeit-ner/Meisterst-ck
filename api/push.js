@@ -27,10 +27,14 @@ module.exports = async (req, res) => {
     const i = (s.times || []).indexOf(now.time);
     if (i < 0) continue;
     const msg = { ...MSG[Math.min(i, 2)] };
-    if (i === 1) {
+    if (i >= 1) {
       const { data } = await sb.from("app_state").select("data").eq("user_id", s.user_id).maybeSingle();
-      const man = data?.data?.man?.find((m) => m.d === now.day);
-      if (man) msg.body = `„${man.t}“ – bist du noch dran?`;
+      const d = data?.data || {};
+      const man = (d.man || []).find((m) => m.d === now.day);
+      const doneToday = (d.log || []).some((l) => l.d === now.day);
+      const g = (d.goals || []).find((x) => x.id === d.focus), step = g && g.steps && g.steps[0];
+      if (i === 1 && man) msg.body = `„${man.t}“ – bist du noch dran?`;
+      if (step && !doneToday) { msg.step = step.text; msg.body = (i === 1 && man ? msg.body + " " : "") + `Heute: ${step.text}`; }
     }
     try {
       await webpush.sendNotification(s.sub, JSON.stringify(msg));
