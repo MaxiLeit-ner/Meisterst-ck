@@ -257,8 +257,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;border-radiu
   <section data-block="char" class="char" id="char"></section>
 
   <section data-block="build">
-    <h2 id="buildH">Mein Bauprojekt</h2>
-    <div class="scene"><svg id="scene" viewBox="0 0 320 210" role="img" aria-label="Bauprojekt, das mit jedem Schritt wächst"></svg></div>
+    <h2 id="buildH">Werkstück</h2>
+    <div class="scene"><svg id="scene" viewBox="0 0 320 210" role="img" aria-label="Möbelstück, das mit jedem Schritt wächst"></svg></div>
     <div class="rcap"><span id="buildCap"></span><span id="buildNum"></span></div>
   </section>
 
@@ -377,7 +377,7 @@ function levelUp(L,txt){$("lvNum").textContent=L;$("lvTxt").textContent=txt;$("l
 $("lvOk").onclick=()=>{$("lvlup").hidden=true};
 let toastT=null;function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,2600)}
 let lastXp=null;
-const BLOCKS={char:"Level & Charakter",build:"Bauprojekt",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
+const BLOCKS={char:"Level & Charakter",build:"Werkstück",today:"Tagesquest",ruler:"Zollstock",review:"Rückblick",plan:"Fokus-Plan",coach:"KI-Coach",pics:"Visionboard & Erfolge",rewards:"Belohnungen",check:"Abend-Check-in",ideas:"Ideen-Parkplatz",vision:"Wofür ich das mache",log:"Zuletzt geschafft"};
 function layout(){const all=Object.keys(BLOCKS);let L=(S.layout||[]).filter(x=>all.includes(x.id));all.forEach(id=>{if(!L.find(x=>x.id===id))L.push({id,on:true})});S.layout=L;
   const w=document.querySelector(".wrap"),end=$("save");
   L.forEach(x=>{const el=w.querySelector(`[data-block="${x.id}"]`);if(el){w.insertBefore(el,end);el.classList.toggle("off",!x.on)}})}
@@ -428,38 +428,59 @@ function renderReview(){const now=new Date();now.setHours(0,0,0,0);const a=bound
     <div class="cal ${cls}">${cal}</div><div class="revmsg">${msg}</div>`;
   document.querySelectorAll("[data-per]").forEach(b=>b.classList.toggle("on",b.dataset.per===per))}
 document.querySelectorAll("[data-per]").forEach(b=>b.onclick=()=>{per=b.dataset.per;renderReview()});
-// Bauprojekt: jeder erledigte Schritt setzt ein Bauteil
-const PARTS=[
- ["Baugrund vorbereitet",'<rect x="0" y="182" width="320" height="28" fill="#7fae74"/>'],
- ["Fundament gegossen",'<rect x="58" y="170" width="150" height="14" fill="#9aa39e"/>'],
- ["Linke Wand steht",'<rect x="66" y="112" width="18" height="58" fill="#c98f5a"/>'],
- ["Rechte Wand steht",'<rect x="182" y="112" width="18" height="58" fill="#c98f5a"/>'],
- ["Mittelwand gemauert",'<rect x="84" y="112" width="98" height="58" fill="#d9a06a"/>'],
- ["Ringbalken aufgelegt",'<rect x="60" y="104" width="146" height="9" fill="#8a5a36"/>'],
- ["Dachstuhl links",'<path d="M56 106 L133 56 L133 106z" fill="#9b6b43"/>'],
- ["Dachstuhl rechts",'<path d="M133 56 L210 106 L133 106z" fill="#8a5a36"/>'],
- ["Erste Ziegelreihe",'<path d="M56 106 L210 106 L194 96 L72 96z" fill="#b4532a"/>'],
- ["Zweite Ziegelreihe",'<path d="M72 96 L194 96 L172 82 L94 82z" fill="#c4613a"/>'],
- ["Dach gedeckt",'<path d="M94 82 L172 82 L133 56z" fill="#b4532a"/>'],
- ["Haustür eingebaut",'<rect x="122" y="134" width="22" height="36" rx="2" fill="#24493b"/><circle cx="139" cy="153" r="2" fill="#f2c230"/>'],
- ["Fenster links",'<rect x="92" y="122" width="22" height="20" fill="#bfe0ee" stroke="#fbfaf6" stroke-width="3"/>'],
- ["Fenster rechts",'<rect x="152" y="122" width="22" height="20" fill="#bfe0ee" stroke="#fbfaf6" stroke-width="3"/>'],
- ["Schornstein gemauert",'<rect x="166" y="60" width="12" height="26" fill="#8d4a2a"/>'],
- ["Werkstatt-Anbau",'<rect x="210" y="132" width="64" height="38" fill="#c98f5a"/><path d="M206 134 L278 134 L270 120 L214 120z" fill="#24493b"/>'],
- ["Werkstatt-Tor",'<rect x="226" y="144" width="32" height="26" fill="#9b6b43"/><path d="M226 152 h32 M226 160 h32" stroke="#7a5233" stroke-width="2"/>'],
- ["Baum gepflanzt",'<rect x="28" y="150" width="7" height="34" fill="#7a5233"/><circle cx="31" cy="140" r="18" fill="#3f7a52"/>'],
- ["Gartenweg gelegt",'<path d="M126 184 L140 184 L150 210 L116 210z" fill="#d9c7a6"/>'],
- ["Licht an, Projekt fertig",'<rect x="92" y="122" width="22" height="20" fill="#f2c230" opacity=".85"/><rect x="152" y="122" width="22" height="20" fill="#f2c230" opacity=".85"/><circle cx="286" cy="34" r="14" fill="#f2c230"/>']];
+// Werkstück: jeder erledigte Schritt setzt ein Bauteil. Teile in Zeichenreihenfolge, Zahl = Bauschritt.
+const FURN=[
+ {name:"Hocker",parts:[
+  [1,"Hintere Beine gesägt",'<rect x="132" y="120" width="8" height="58" fill="#9b6b43"/><rect x="180" y="120" width="8" height="58" fill="#9b6b43"/>'],
+  [2,"Vordere Beine gehobelt",'<rect x="118" y="124" width="11" height="58" fill="#c98f5a"/><rect x="191" y="124" width="11" height="58" fill="#c98f5a"/>'],
+  [3,"Zarge verleimt",'<rect x="116" y="118" width="88" height="10" fill="#9b6b43"/>'],
+  [4,"Sitzfläche aufgesetzt",'<rect x="104" y="104" width="112" height="14" rx="4" fill="#dcae7b"/>'],
+  [5,"Kanten gerundet",'<rect x="104" y="104" width="112" height="4" rx="2" fill="#f0cf9f"/>'],
+  [6,"Geölt und fertig",'<path d="M114 111 q30 -4 60 0 t36 0" stroke="#9b6b43" stroke-width="1.2" fill="none" opacity=".6"/>']]},
+ {name:"Bücherregal",parts:[
+  [6,"Rückwand eingesetzt",'<rect x="112" y="44" width="96" height="134" fill="#e9c896"/>'],
+  [1,"Linke Seite zugeschnitten",'<rect x="100" y="40" width="12" height="142" fill="#c98f5a"/>'],
+  [2,"Rechte Seite zugeschnitten",'<rect x="208" y="40" width="12" height="142" fill="#c98f5a"/>'],
+  [3,"Boden gedübelt",'<rect x="112" y="168" width="96" height="12" fill="#9b6b43"/>'],
+  [4,"Deckel aufgesetzt",'<rect x="96" y="34" width="128" height="10" rx="2" fill="#9b6b43"/>'],
+  [5,"Erster Fachboden",'<rect x="112" y="122" width="96" height="7" fill="#9b6b43"/>'],
+  [7,"Zweiter Fachboden",'<rect x="112" y="80" width="96" height="7" fill="#9b6b43"/>'],
+  [8,"Eingeräumt",'<rect x="118" y="56" width="9" height="24" fill="#24493b"/><rect x="128" y="60" width="8" height="20" fill="#b4532a"/><rect x="137" y="54" width="10" height="26" fill="#f2c230"/><rect x="170" y="98" width="10" height="24" fill="#5c8a72"/><rect x="181" y="102" width="9" height="20" fill="#24493b"/><circle cx="160" cy="160" r="8" fill="#b4532a"/>']]},
+ {name:"Esstisch",parts:[
+  [1,"Hintere Beine",'<rect x="90" y="108" width="9" height="70" fill="#9b6b43"/><rect x="221" y="108" width="9" height="70" fill="#9b6b43"/>'],
+  [2,"Vordere Beine",'<rect x="74" y="112" width="12" height="70" fill="#c98f5a"/><rect x="234" y="112" width="12" height="70" fill="#c98f5a"/>'],
+  [3,"Zarge mit Schlitz und Zapfen",'<rect x="72" y="100" width="176" height="12" fill="#9b6b43"/>'],
+  [4,"Tischplatte verleimt",'<rect x="56" y="86" width="208" height="16" rx="3" fill="#dcae7b"/>'],
+  [5,"Platte geschliffen",'<path d="M66 92 q50 -4 100 0 t90 0 M70 97 q60 3 120 0 t66 0" stroke="#9b6b43" stroke-width="1.2" fill="none" opacity=".55"/>'],
+  [6,"Kanten gefast",'<rect x="56" y="86" width="208" height="4" rx="2" fill="#f0cf9f"/>'],
+  [7,"Geölt",'<rect x="56" y="86" width="208" height="16" rx="3" fill="#ffffff" opacity=".12"/>'],
+  [8,"Gedeckt und fertig",'<rect x="150" y="66" width="14" height="20" rx="3" fill="#bfe0ee"/><path d="M157 66 v-14" stroke="#3f7a52" stroke-width="2"/><circle cx="157" cy="50" r="6" fill="#f2c230"/>']]},
+ {name:"Kleiderschrank",parts:[
+  [5,"Rückwand",'<rect x="100" y="36" width="120" height="132" fill="#e9c896"/>'],
+  [1,"Sockel",'<rect x="96" y="168" width="128" height="12" fill="#7a5233"/>'],
+  [2,"Linke Seite",'<rect x="88" y="30" width="12" height="140" fill="#c98f5a"/>'],
+  [3,"Rechte Seite",'<rect x="220" y="30" width="12" height="140" fill="#c98f5a"/>'],
+  [4,"Kranz oben",'<rect x="82" y="22" width="156" height="12" rx="2" fill="#9b6b43"/>'],
+  [6,"Linke Tür angeschlagen",'<rect x="100" y="36" width="59" height="132" fill="#dcae7b" stroke="#9b6b43" stroke-width="2"/><rect x="108" y="46" width="43" height="112" fill="none" stroke="#9b6b43" stroke-width="1.5" opacity=".6"/>'],
+  [7,"Rechte Tür angeschlagen",'<rect x="161" y="36" width="59" height="132" fill="#dcae7b" stroke="#9b6b43" stroke-width="2"/><rect x="169" y="46" width="43" height="112" fill="none" stroke="#9b6b43" stroke-width="1.5" opacity=".6"/>'],
+  [8,"Griffe montiert",'<rect x="150" y="92" width="4" height="22" rx="2" fill="#24493b"/><rect x="166" y="92" width="4" height="22" rx="2" fill="#24493b"/>'],
+  [9,"Meisterstück fertig",'<rect x="82" y="22" width="156" height="3" fill="#f2c230"/><circle cx="160" cy="14" r="4" fill="#f2c230"/>']]}];
+const TOTAL=FURN.reduce((a,f)=>a+f.parts.length,0);
 let lastBuilt=0;
-function renderBuild(){const n=S.log.length,per=PARTS.length,proj=Math.floor(n/per),k=n%per,done=k===0&&n>0;
-  const count=done?per:k,built=PARTS.slice(0,count);
-  $("buildH").textContent="Mein Bauprojekt"+(proj>0&&!done?" · Nr. "+(proj+1):"");
-  $("scene").innerHTML=built.map((b,i)=>`<g class="part ${lastBuilt!==null&&i>=lastBuilt?"new":""}" style="animation-delay:${lastBuilt!==null&&i>=lastBuilt?(i-lastBuilt)*0.12:0}s">${b[1]}</g>`).join("")+
-    (count>=15?'<g class="smoke"><circle cx="172" cy="52" r="5" fill="#cfd6d2"/><circle cx="178" cy="42" r="7" fill="#dfe5e1"/></g>':"")+
-    (!count?'<text x="160" y="110" text-anchor="middle" font-size="12" fill="#5f6b65">Dein erster Schritt legt den Baugrund</text>':"");
-  $("buildCap").innerHTML=count?`<b>${built[count-1][0]}</b>`:"Noch leer";
-  $("buildNum").textContent=done?"Fertig! Nächster Schritt startet einen neuen Bau":`Bauteil ${count} von ${per}`;
-  lastBuilt=count}
+function renderBuild(){const n=S.log.length,round=Math.floor(n/TOTAL);let r=n%TOTAL,fi=0;
+  while(fi<FURN.length&&r>=FURN[fi].parts.length&&!(r===FURN[fi].parts.length&&fi===FURN.length-1)){r-=FURN[fi].parts.length;fi++}
+  if(fi>=FURN.length){fi=FURN.length-1;r=FURN[fi].parts.length}
+  let F=FURN[fi],count=r,justDone=false;
+  if(count===0&&n>0){fi=(fi+FURN.length-1)%FURN.length;F=FURN[fi];count=F.parts.length;justDone=true}
+  const key=fi+":"+count,anim=lastBuilt!==key;
+  const last=F.parts.find(p=>p[0]===count);
+  $("buildH").textContent="Werkstück: "+F.name+(round>0?" · Runde "+(round+1):"");
+  $("scene").innerHTML='<rect x="0" y="180" width="320" height="30" fill="#b98a5e"/><path d="M0 180 h320 M0 195 h320" stroke="#9b6b43" stroke-width="1.5"/>'+
+    F.parts.filter(p=>p[0]<=count).map(p=>`<g class="part ${anim&&(lastBuilt===0||p[0]===count)?"new":""}" style="animation-delay:${anim&&lastBuilt===0?(p[0]-1)*0.15:0}s">${p[2]}</g>`).join("")+
+    (!count?'<text x="160" y="110" text-anchor="middle" font-size="12" fill="#5f6b65">Dein erster Schritt sägt das erste Bauteil zu</text>':"");
+  $("buildCap").innerHTML=count?`<b>${esc(last[1])}</b>`:"Bereit zum Bauen";
+  $("buildNum").textContent=justDone?F.name+" fertig! Nächstes Möbelstück wartet":`Bauteil ${count} von ${F.parts.length}`;
+  lastBuilt=key}
 function render(){
   layout();renderBuild();
   $("date").textContent=new Date().toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"});
