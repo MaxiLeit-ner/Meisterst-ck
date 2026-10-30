@@ -698,7 +698,7 @@ function render(){
   $("plan").innerHTML=open.length?open.map((s,i)=>`<li><span class="n">${i+1}</span><span class="t">${esc(s.text)}</span><button class="x" data-del="${s.id}" aria-label="Schritt löschen">×</button></li>`).join(""):`<li class="empty">Noch keine Schritte geplant.</li>`;
   $("addStep").hidden=!g;
   // Ideen
-  $("ideas").innerHTML=S.ideas.length?S.ideas.map(i=>`<li><span class="t">${esc(i.text)}</span><button class="mini" data-plan="${i.id}">Bauplan</button><button class="mini" data-focus="${i.id}">Fokus</button><button class="x" data-idel="${i.id}" aria-label="Idee löschen">×</button></li>`).join(""):`<li class="empty">Hier landet alles, was dir einfällt. Du musst es nicht sofort umsetzen.</li>`;
+  $("ideas").innerHTML=S.ideas.length?S.ideas.map(i=>`<li><span class="t">${esc(i.text)}</span><button class="mini" data-plan="${i.id}">Bauplan</button><button class="mini" data-focus="${i.id}">Fokus</button>${assets?`<button class="mini" data-ipic="${i.id}">📷 Geschafft</button>`:""}<button class="x" data-idel="${i.id}" aria-label="Idee löschen">×</button></li>`).join(""):`<li class="empty">Hier landet alles, was dir einfällt. Du musst es nicht sofort umsetzen.</li>`;
   // Vision
   $("visionBox").innerHTML=`<div class="vision">${esc(S.vision)}</div><div class="row"><button class="link" id="editV">Ändern</button></div>`;
   $("editV").onclick=()=>{$("visionBox").innerHTML=`<textarea id="vIn">${esc(S.vision)}</textarea><div class="row"><button class="mini" id="vOk">Speichern</button></div>`;
@@ -728,7 +728,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   if(b.dataset.redeem){const r=rewards().find(x=>x.id===b.dataset.redeem);if(r){r.done=true;toast("Gönn es dir. Verdient ist verdient.");save()}}
   if(b.dataset.rdel){S.rewards=rewards().filter(x=>x.id!==b.dataset.rdel);save()}
   if(b.dataset.plan)makePlan(b.dataset.plan);
-  if(b.dataset.addpic){picKind=b.dataset.addpic;$("picFile").click()}
+  if(b.dataset.addpic){picKind=b.dataset.addpic;picIdea=null;$("picFile").click()}
+  if(b.dataset.ipic){picKind="win";picIdea=b.dataset.ipic;$("picFile").click()}
   if(b.dataset.pdel){const d=S.pics.find(p=>p.id===b.dataset.pdel);if(d&&SB)SB.storage.from("bilder").remove([d.asset]).catch(()=>{});S.pics=S.pics.filter(p=>p.id!==b.dataset.pdel);save()}
   if(b.dataset.won){const p=S.pics.find(x=>x.id===b.dataset.won);if(p){p.kind="win";p.d=day();save();toast("Geschafft! +50 XP")}}
   if(b.dataset.idel){S.ideas=S.ideas.filter(i=>i.id!==b.dataset.idel);save()}
@@ -742,18 +743,19 @@ function save(){render();try{syncStatus()}catch(e){}try{localStorage.setItem(LS,
   clearTimeout(timer);$("save").textContent="Speichert …";
   timer=setTimeout(()=>ref.set(JSON.parse(JSON.stringify(S))).then(()=>$("save").textContent="Gespeichert").catch(()=>$("save").textContent="Speichern fehlgeschlagen – auf diesem Gerät ist alles da."),500)}
 
-let ai=null, hist=[], assets=null, picKind="vision", picBlob=null;
+let ai=null, hist=[], assets=null, picKind="vision", picBlob=null, picIdea=null;
 function shrink(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const m=1600,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(),"image/jpeg",.85)};im.onerror=rej;im.src=u})}
 $("picFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
   try{picBlob=await shrink(f)}catch(err){picBlob=f}
   $("picPrev").innerHTML=`<img src="${URL.createObjectURL(picBlob)}" alt="Vorschau">`;
   $("picLbl").textContent=picKind==="win"?"Was hast du geschafft?":"Was willst du erreichen?";
   $("picCap").placeholder=picKind==="win"?"z. B. Werkstatt ist gemietet":"z. B. 1000 Follower";
-  $("picForm").hidden=false;$("picCap").focus()};
-$("picNo").onclick=()=>{$("picForm").hidden=true;picBlob=null};
+  const ii=picIdea&&S.ideas.find(x=>x.id===picIdea);if(ii)$("picCap").value=ii.text;
+  $("picForm").hidden=false;$("picForm").scrollIntoView({behavior:"smooth",block:"center"});$("picCap").focus()};
+$("picNo").onclick=()=>{$("picForm").hidden=true;picBlob=null;picIdea=null};
 $("picForm").onsubmit=async e=>{e.preventDefault();const cap=$("picCap").value.trim();if(!cap){$("picCap").focus();return}if(!picBlob||!assets)return;
   const b=$("picOk");b.disabled=true;b.textContent="Lädt hoch …";
-  try{const r=await assets.upload(picBlob);S.pics.unshift({id:uid(),asset:r.id,cap,kind:picKind,d:day()});$("picForm").hidden=true;$("picCap").value="";picBlob=null;save();if(picKind==="win")toast("Erfolg gespeichert! +50 XP")}
+  try{const r=await assets.upload(picBlob);S.pics.unshift({id:uid(),asset:r.id,cap,kind:picKind,d:day()});if(picIdea){S.ideas=S.ideas.filter(x=>x.id!==picIdea);picIdea=null}$("picForm").hidden=true;$("picCap").value="";picBlob=null;save();if(picKind==="win")toast("Erfolg gespeichert! +50 XP")}
   catch(err){toast("Hochladen hat nicht geklappt. Versuch es nochmal.")}
   b.disabled=false;b.textContent="Speichern"};
 // Bilder: privat pro Nutzer, Anzeige über zeitlich begrenzte Links
